@@ -36,12 +36,12 @@ void delay(void){
 int main(void)
 {
 	/*SPI Experiment*/
-	SPI_PCLK_CTRL(SPI1,1);
+	SPI_PCLK_CTRL(SPI1,ENABLE);
 
 	printf("SPI enabled\n");
 
 
-	SPI_PCLK_CTRL(SPI1, 0);
+	SPI_PCLK_CTRL(SPI1, DISABLE);
 
 	/*End SPI*/
 

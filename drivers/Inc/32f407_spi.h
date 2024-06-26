@@ -1,7 +1,7 @@
 #ifndef INC_32f407_SPI_H_
 #define INC_32f407_SPI_H_
 
-#include "../../CMSIS/Inc/stm32f407xx.h"
+#include "../../CMSIS/Inc/main.h"
 
 
 // Configuration struct for SPIx Peripheral
