@@ -39,6 +39,18 @@ int main(void)
 	SPI_PCLK_CTRL(SPI1,ENABLE);
 
 	printf("SPI enabled\n");
+	SPI_Handle_t SPI2Handle;
+
+	SPI2Handle.pSPIx = SPI1;
+	SPI2Handle.SPIConfig.SPI_BUSConfig = SPI_BUS_CONFIG_FD;
+	SPI2Handle.SPIConfig.SPI_DeviceMode = SPI_DEVICE_MODE_MASTER;
+	SPI2Handle.SPIConfig.SPI_SclkSpeed = SPI_SCLK_SPEED_DIV4;
+	SPI2Handle.SPIConfig.SPI_DFF = SPI_DFF_8BITS;
+	SPI2Handle.SPIConfig.SPI_CPOL = SPI_CPOL_LOW;
+	SPI2Handle.SPIConfig.SPI_CPHA = SPI_CPHA_LOW;
+	SPI2Handle.SPIConfig.SPI_SSM = SPI_SSM_EN; // software slave management for NSS pin
+
+	SPI_Init(&SPI2Handle);
 
 
 	SPI_PCLK_CTRL(SPI1, DISABLE);
