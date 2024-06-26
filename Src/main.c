@@ -35,7 +35,17 @@ void delay(void){
 
 int main(void)
 {
-	Test_Inc();
+	/*SPI Experiment*/
+	SPI_PCLK_CTRL(SPI1,1);
+
+	printf("SPI enabled\n");
+
+
+	SPI_PCLK_CTRL(SPI1, 0);
+
+	/*End SPI*/
+
+
 	printf("System booted with Default clock\n");
 	delay();
 
