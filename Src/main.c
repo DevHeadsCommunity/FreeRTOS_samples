@@ -16,7 +16,8 @@
  ******************************************************************************
  */
 
-#include "main.h"
+#include "../CMSIS/Inc/main.h"
+#include "../drivers/Inc/32f407_spi.h"
 
 //for print f
 #include <stdio.h>
@@ -34,6 +35,7 @@ void delay(void){
 
 int main(void)
 {
+	Test_Inc();
 	printf("System booted with Default clock\n");
 	delay();
 
