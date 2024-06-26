@@ -87,3 +87,93 @@ void SPI_DeInit(SPI_TypeDef *pSPIx) {
         RCC->AHB1RSTR &= ~(1 << RCC_APB1RSTR_SPI3RST_Pos);
 	} 
 }
+
+uint8_t SPI_SendData(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_t Len){
+    //check if SPI is not busy
+	uint8_t state = pSPIHandle->TxState;
+
+	if (state != SPI_BUSY_IN_TX) {
+		// save txbuffer and len
+		pSPIHandle->pTxBuffer = pTxBuffer;
+		pSPIHandle->TxLen = Len;
+		//Mark spi as busy in transmission
+		pSPIHandle->TxState = SPI_BUSY_IN_TX;
+		// ENABLE TXEIE BIT
+		pSPIHandle->pSPIx->CR2 |= (1 << SPI_CR2_TXEIE_Pos);
+		//transmission now handled in ISR
+	}
+
+	return state;
+}
+
+uint8_t SPI_ReceiveData(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t Len){
+    //check if SPI is not busy
+	uint8_t state = pSPIHandle->RxState;
+
+	if (state != SPI_BUSY_IN_RX) {
+		// save txbuffer and len
+		pSPIHandle->pRxBuffer = pRxBuffer;
+		pSPIHandle->RxLen = Len;
+		//Mark spi as busy in transmission
+		pSPIHandle->RxState = SPI_BUSY_IN_RX;
+		// ENABLE RXNEIE BIT
+		pSPIHandle->pSPIx->CR2 |= (1 << SPI_CR2_RXNEIE_Pos);
+		//reception now handled in ISR
+	}
+
+	return state;
+}
+
+
+
+
+/******
+ * @fn SPI_SSOEConfig
+ *
+ * @brief  Enables or Disables a SSOE for a SPI peripheral
+ *
+ * @params[pSPIx] port handle structure
+ * @params[EnorDi] Enable or Disable
+
+ *
+ * @return void
+ * @note
+ *  */
+void SPI_SSOEConfig(SPI_TypeDef *pSPIx, uint8_t EnorDi) {
+	if (EnorDi == ENABLE) {
+		pSPIx->CR2 |= (1 << SPI_CR2_SSOE_Pos);
+	} else {
+		pSPIx->CR2 &= ~(1 << SPI_CR2_SSOE_Pos);
+	}
+}
+
+
+void SPI_ClearOVRFlag(SPI_Handle_t *pSPIHandle){
+	uint8_t temp;
+
+	temp = pSPIHandle->pSPIx->DR;
+	temp = pSPIHandle->pSPIx->SR;
+	(void) temp;
+
+}
+void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle){
+	//TX done close SPI and tell app
+	pSPIHandle->pSPIx->CR2 &= ~(1 << SPI_CR2_TXEIE_Pos);
+	pSPIHandle->pTxBuffer = NULL;
+	pSPIHandle->TxLen = 0;
+	pSPIHandle->TxState = SPI_READY;
+	SPI_ApplicationEventCallBack(pSPIHandle, SPI_EVENT_TX_CMPLT);
+
+}
+void SPI_CloseReception(SPI_Handle_t *pSPIHandle){
+	pSPIHandle->pSPIx->CR2 &= ~(1 << SPI_CR2_RXNEIE_Pos);
+	pSPIHandle->pRxBuffer = NULL;
+	pSPIHandle->RxLen = 0;
+	pSPIHandle->RxState = SPI_READY;
+	SPI_ApplicationEventCallBack(pSPIHandle, SPI_EVENT_RX_CMPLT);
+}
+
+//application callback
+__attribute((weak)) void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
+	// weak implementation for Application to override
+}
