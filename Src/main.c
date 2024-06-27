@@ -20,11 +20,17 @@
 #include "../drivers/Inc/32f407_spi.h"
 
 //for print f
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+
 
 #define BLUE_LED_PORT GPIOD
 #define BLUE_LED_PIN 15
 
+
+//Globals
+SPI_Handle_t SPI2Handle;
 
 void SPI_2_Init();
 
@@ -39,6 +45,11 @@ void delay(void){
 int main(void)
 {
 	SPI_2_Init();
+
+	char str[] = "SOS FROM SPI";
+
+	SPI_SendData(&SPI2Handle,  (uint8_t *)&str, strlen(str));
+
 
 	printf("System booted with Default clock\n");
 	delay();
@@ -59,6 +70,9 @@ int main(void)
 	printf("GPIO D setup and now will turn on blue LED \n");
 
 
+
+	while(1) {
+
 	GPIOD->BSRR |= GPIO_BSRR_BS_15;
 
 	printf("Blue LED is now ON\n");
@@ -66,15 +80,20 @@ int main(void)
 	delay();
 	delay();
 	delay();
+	
 
-	printf("GPIO D setup will turn off blue LED\n");
+
+	printf("GPIO D setup will turn off blue LED \n");
 
 	GPIOD->BSRR |= GPIO_BSRR_BR_15;
 
-	printf("Blue LED is now OFF\n");
+	printf("Blue LED is now OFF \n");
 
- /* Loop forever */
-	for(;;);
+	delay();
+	delay();
+	delay();
+	}
+	return 0;
 }
 
 
@@ -131,7 +150,7 @@ void SPI_2_Init() {
 	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR12_0;
 	GPIOB->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR12_1;
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR12_0;
-	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR12_1;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR12_1;
 	//get this pins altfn reg
 	altfn_reg = 12 % 8;
 	GPIOB->AFR[1] |= 5 << (altfn_reg * 4);
@@ -140,7 +159,7 @@ void SPI_2_Init() {
 	
 
 	printf("SPI enabled\n");
-	SPI_Handle_t SPI2Handle;
+	
 
 	SPI2Handle.pSPIx = SPI2;
 	SPI2Handle.SPIConfig.SPI_BUSConfig = SPI_BUS_CONFIG_FD;
@@ -154,4 +173,19 @@ void SPI_2_Init() {
 	SPI_Init(&SPI2Handle);
 
 
+}
+
+void SPI2_IRQHandler(){ 
+	printf("We have an SPI interrupt \n");
+	SPI_IRQHandling(&SPI2Handle);
+}
+
+
+//application callback
+void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
+	// weak implementation for Application to override
+	printf("We Handled SPI EVENT %d \n", AppEv);
+	//Depemding on what handle send info to some user
+	//SPI2 display
+	//SPI1 accelerometer
 }
