@@ -89,7 +89,7 @@ uint8_t SPI_ReceiveData(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t L
 void SPI_ClearOVRFlag(SPI_Handle_t *pSPIHandle);
 void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle);
 void SPI_CloseReception(SPI_Handle_t *pSPIHandle);
-void SPI_SSOEConfig(SPI_TypeDef *pSPIx, uint8_t EnorDi)
+void SPI_SSOEConfig(SPI_TypeDef *pSPIx, uint8_t EnorDi);
 //application callback
 void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv);
 #endif

@@ -35,6 +35,9 @@ void SPI_PCLK_CTRL(SPI_TypeDef *pSPIx, uint8_t EnorDi){
  *  */
 
 void SPI_Init(SPI_Handle_t *pSPIHandle){
+	/*SPI Experiment*/
+	SPI_PCLK_CTRL(pSPIHandle->pSPIx,ENABLE);
+
     //CR1 temp data 
     uint32_t tempreg = 0;
 
