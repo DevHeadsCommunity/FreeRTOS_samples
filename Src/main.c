@@ -26,6 +26,9 @@
 #define BLUE_LED_PIN 15
 
 
+void SPI_2_Init();
+
+
 
 void delay(void){
 	for(uint32_t i = 0; i < 500000/2; i ++);
@@ -35,28 +38,7 @@ void delay(void){
 
 int main(void)
 {
-	/*SPI Experiment*/
-	SPI_PCLK_CTRL(SPI1,ENABLE);
-
-	printf("SPI enabled\n");
-	SPI_Handle_t SPI2Handle;
-
-	SPI2Handle.pSPIx = SPI1;
-	SPI2Handle.SPIConfig.SPI_BUSConfig = SPI_BUS_CONFIG_FD;
-	SPI2Handle.SPIConfig.SPI_DeviceMode = SPI_DEVICE_MODE_MASTER;
-	SPI2Handle.SPIConfig.SPI_SclkSpeed = SPI_SCLK_SPEED_DIV4;
-	SPI2Handle.SPIConfig.SPI_DFF = SPI_DFF_8BITS;
-	SPI2Handle.SPIConfig.SPI_CPOL = SPI_CPOL_LOW;
-	SPI2Handle.SPIConfig.SPI_CPHA = SPI_CPHA_LOW;
-	SPI2Handle.SPIConfig.SPI_SSM = SPI_SSM_EN; // software slave management for NSS pin
-
-	SPI_Init(&SPI2Handle);
-
-
-	SPI_PCLK_CTRL(SPI1, DISABLE);
-
-	/*End SPI*/
-
+	SPI_2_Init();
 
 	printf("System booted with Default clock\n");
 	delay();
@@ -91,13 +73,85 @@ int main(void)
 
 	printf("Blue LED is now OFF\n");
 
-
-
-
-
-
-
-
-    /* Loop forever */
+ /* Loop forever */
 	for(;;);
+}
+
+
+
+
+void SPI_2_Init() {
+
+	uint32_t altfn_reg;
+
+	// GPIO B for SPI 2
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+
+	//MOSI
+	GPIOB->MODER |= GPIO_MODER_MODER15_0;
+	GPIOB->MODER &= ~GPIO_MODER_MODER15_1;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT_15;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR15_0;
+	GPIOB->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR15_1;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
+	//get this pins altfn reg
+	altfn_reg = 15 % 8;
+	GPIOB->AFR[1] |= 5 << (altfn_reg * 4);
+	
+
+	//MISO
+	GPIOB->MODER |= GPIO_MODER_MODER14_0;
+	GPIOB->MODER &= ~GPIO_MODER_MODER14_1;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT_14;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR14_0;
+	GPIOB->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR14_1;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR14_0;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR14_1;
+	//get this pins altfn reg
+	altfn_reg = 14 % 8;
+	GPIOB->AFR[1] |= 5 << (altfn_reg * 4);
+
+	//SCLK
+	GPIOB->MODER |= GPIO_MODER_MODER13_0;
+	GPIOB->MODER &= ~GPIO_MODER_MODER13_1;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT_13;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR13_0;
+	GPIOB->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR13_1;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR13_0;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR13_1;
+	//get this pins altfn reg
+	altfn_reg = 13 % 8;
+	GPIOB->AFR[1] |= 5 << (altfn_reg * 4);
+
+	//NSS
+	GPIOB->MODER |= GPIO_MODER_MODER12_0;
+	GPIOB->MODER &= ~GPIO_MODER_MODER12_1;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT_12;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR12_0;
+	GPIOB->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR12_1;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR12_0;
+	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR12_1;
+	//get this pins altfn reg
+	altfn_reg = 12 % 8;
+	GPIOB->AFR[1] |= 5 << (altfn_reg * 4);
+
+
+	
+
+	printf("SPI enabled\n");
+	SPI_Handle_t SPI2Handle;
+
+	SPI2Handle.pSPIx = SPI2;
+	SPI2Handle.SPIConfig.SPI_BUSConfig = SPI_BUS_CONFIG_FD;
+	SPI2Handle.SPIConfig.SPI_DeviceMode = SPI_DEVICE_MODE_MASTER;
+	SPI2Handle.SPIConfig.SPI_SclkSpeed = SPI_SCLK_SPEED_DIV4;
+	SPI2Handle.SPIConfig.SPI_DFF = SPI_DFF_8BITS;
+	SPI2Handle.SPIConfig.SPI_CPOL = SPI_CPOL_LOW;
+	SPI2Handle.SPIConfig.SPI_CPHA = SPI_CPHA_LOW;
+	SPI2Handle.SPIConfig.SPI_SSM = SPI_SSM_EN; // software slave management for NSS pin
+
+	SPI_Init(&SPI2Handle);
+
+
 }
