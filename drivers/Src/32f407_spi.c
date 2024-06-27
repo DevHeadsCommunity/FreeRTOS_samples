@@ -79,6 +79,14 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
     //SSM
 	tempreg |= pSPIHandle->SPIConfig.SPI_SSM << SPI_CR1_SSM_Pos;
 
+	//LSB First
+	if (pSPIHandle->SPIConfig.SPI_MSBFIRST == DISABLE) {
+		tempreg |= (pSPIHandle->SPIConfig.SPI_MSBFIRST << SPI_CR1_LSBFIRST_Pos);
+	}else {
+		tempreg &= ~(1 << SPI_CR1_LSBFIRST_Pos);
+	}
+	
+
 	pSPIHandle->pSPIx->CR1 = tempreg;
 
 	// enable SSOE so we have outtput
