@@ -76,6 +76,17 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
 
 	pSPIHandle->pSPIx->CR1 = tempreg;
 
+	// enable SSOE so we have outtput
+	SPI_SSOEConfig(pSPIHandle->pSPIx, ENABLE);
+
+	//silly delay 
+	for(uint32_t i = 0; i < 250000; i++ ){
+	}
+
+	//enable the serial peripheral 
+	pSPIHandle->pSPIx->CR1 |= (1 << SPI_CR1_SPE_Pos);
+
+
 }
 
 void SPI_DeInit(SPI_TypeDef *pSPIx) {
