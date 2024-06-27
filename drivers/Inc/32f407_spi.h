@@ -90,6 +90,7 @@ void SPI_ClearOVRFlag(SPI_Handle_t *pSPIHandle);
 void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle);
 void SPI_CloseReception(SPI_Handle_t *pSPIHandle);
 void SPI_SSOEConfig(SPI_TypeDef *pSPIx, uint8_t EnorDi);
+void SPI_IRQHandling(SPI_Handle_t *pHandle);
 //application callback
 void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv);
 #endif

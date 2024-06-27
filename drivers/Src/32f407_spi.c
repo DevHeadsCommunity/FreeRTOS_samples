@@ -1,6 +1,11 @@
 #include "../Inc/32f407_spi.h"
 #include <stdint.h>
 
+
+static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle);
+static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle);
+static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle);
+
 /* Clock control for SPI */
 void SPI_PCLK_CTRL(SPI_TypeDef *pSPIx, uint8_t EnorDi){
     if(EnorDi == ENABLE) {
@@ -79,9 +84,23 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
 	// enable SSOE so we have outtput
 	SPI_SSOEConfig(pSPIHandle->pSPIx, ENABLE);
 
+	//Enable SSI so the hardware controls the cs pin
+	pSPIHandle->pSPIx->CR1 |= (ENABLE << SPI_CR1_SSI_Pos);
+
+
 	//silly delay 
 	for(uint32_t i = 0; i < 250000; i++ ){
 	}
+
+	//Enable Interrupts
+    if(pSPIHandle->pSPIx == SPI1){
+        NVIC_EnableIRQ(SPI1_IRQn);
+    } else  if(pSPIHandle->pSPIx== SPI2){
+    	NVIC_EnableIRQ(SPI2_IRQn);
+    } else  if(pSPIHandle->pSPIx == SPI3){
+        NVIC_EnableIRQ(SPI3_IRQn);
+    } 
+    
 
 	//enable the serial peripheral 
 	pSPIHandle->pSPIx->CR1 |= (1 << SPI_CR1_SPE_Pos);
@@ -161,6 +180,34 @@ void SPI_SSOEConfig(SPI_TypeDef *pSPIx, uint8_t EnorDi) {
 	}
 }
 
+void SPI_IRQHandling(SPI_Handle_t *pSPIHandle){
+	// check for TXE flag
+	uint8_t temp1, temp2;
+	temp1 = pSPIHandle->pSPIx->SR & (1 << SPI_SR_TXE_Pos);
+	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_TXEIE_Pos);
+	if(temp1 && temp2){
+		// we have an interrupt
+		spi_txe_interrupt_handle(pSPIHandle);
+	}
+	// check for RXNE flag
+	temp1 = pSPIHandle->pSPIx->SR & (1 << SPI_SR_RXNE_Pos);
+	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_RXNEIE_Pos);
+	if (temp1 && temp2) {
+		// we have an interrupt
+		spi_rxne_interrupt_handle(pSPIHandle);
+	}
+
+	//handle errors
+	// check for OVR flag
+	temp1 = pSPIHandle->pSPIx->SR & (1 << SPI_SR_OVR_Pos);
+	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_ERRIE_Pos);
+	if (temp1 && temp2) {
+		// we have an interrupt
+		spi_ovr_err_interrupt_handle(pSPIHandle);
+	}
+}
+
+
 
 void SPI_ClearOVRFlag(SPI_Handle_t *pSPIHandle){
 	uint8_t temp;
@@ -186,6 +233,74 @@ void SPI_CloseReception(SPI_Handle_t *pSPIHandle){
 	pSPIHandle->RxState = SPI_READY;
 	SPI_ApplicationEventCallBack(pSPIHandle, SPI_EVENT_RX_CMPLT);
 }
+
+static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle) {
+	// check DFF bit in CR1
+	if ((pSPIHandle->pSPIx->CR1 & (1 << SPI_CR1_DFF_Pos))) {
+		//16bit DFF
+		pSPIHandle->pSPIx->DR = *((uint16_t*) pSPIHandle->pTxBuffer);
+		//decrease length
+		pSPIHandle->TxLen--;
+		pSPIHandle->TxLen--;
+		//inc data pointer location
+		(uint16_t*) pSPIHandle->pTxBuffer++;
+	} else {
+		// 8 bit DFF
+		pSPIHandle->pSPIx->DR = *pSPIHandle->pTxBuffer;
+		pSPIHandle->TxLen--;
+		pSPIHandle->pTxBuffer++;
+	}
+
+	if (!pSPIHandle->TxLen) {
+		//TX done close SPI and tell app
+		SPI_CloseTransmission(pSPIHandle);
+	}
+
+}
+static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle) {
+	// check DFF bit in CR1
+	if ((pSPIHandle->pSPIx->CR1 & (1 << SPI_CR1_DFF_Pos))) {
+		//16bit DFF
+		//load data from DR to RXBuffer
+		*((uint16_t*) pSPIHandle->pRxBuffer) = (uint16_t)pSPIHandle->pSPIx->DR;
+		//decrease length
+		pSPIHandle->RxLen--;
+		pSPIHandle->RxLen--;
+		//inc data pointer location
+		pSPIHandle->pRxBuffer--;
+		pSPIHandle->pRxBuffer--;
+	} else {
+		// 8 bit DFF
+		*(pSPIHandle->pRxBuffer) = (uint8_t)pSPIHandle->pSPIx->DR;
+		pSPIHandle->RxLen--;
+		pSPIHandle->pRxBuffer--;
+	}
+
+	if (!pSPIHandle->RxLen) {
+		//RX done close SPI and tell app
+		SPI_CloseReception(pSPIHandle);
+	}
+
+
+
+}
+
+static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle){
+
+	uint8_t temp;
+	// clear ovr flag
+	if(pSPIHandle->TxState != SPI_BUSY_IN_TX)
+	{
+		temp = pSPIHandle->pSPIx->DR;
+		temp = pSPIHandle->pSPIx->SR;
+	}
+	(void) temp;
+	//inform app
+	SPI_ApplicationEventCallBack(pSPIHandle, SPI_EVENT_OVR_ERR);
+
+}
+
+
 
 //application callback
 __attribute((weak)) void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
