@@ -108,6 +108,9 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
     } else  if(pSPIHandle->pSPIx == SPI3){
         NVIC_EnableIRQ(SPI3_IRQn);
     } 
+
+	//use SPI mode 
+	pSPIHandle->pSPIx->I2SCFGR &= ~(1 << SPI_I2SCFGR_I2SMOD_Pos);
     
 
 	//enable the serial peripheral 
