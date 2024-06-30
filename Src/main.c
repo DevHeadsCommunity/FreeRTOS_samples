@@ -33,6 +33,9 @@
 SPI_Handle_t SPI2Handle;
 uint8_t SPI_Actual_RX;
 
+uint8_t dummy_read = 0xAA;
+
+
 void SPI_2_Init();
 
 
@@ -45,41 +48,43 @@ void delay(void){
 
 int main(void)
 {
-	// Enable the system configuration controller clock
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+	printf("System booted with Default clock\n");
 
-    // Disable JTAG and keep SWD enabled
-    SYSCFG->MEMRMP &= ~SYSCFG_MEMRMP_MEM_MODE; // Clear existing configuration
-    SYSCFG->MEMRMP |= SYSCFG_MEMRMP_MEM_MODE_0; 
 	SPI_2_Init();
 
-	uint8_t who_am_address = (0x0F|1);
-	uint8_t dummy_write = 0xff;
-	uint8_t dummy_read = 0;
+	/*SPI Read Write*/
+
+	uint8_t who_am_address = 0x0F | ((uint8_t)0x80);
+
+	uint8_t dummy_write = 0x00;
 	uint8_t who_am_i_data = 0 ;
 
-	printf("Initialized SPI and asking ACCel for ID: Current, %d \n", who_am_i_data);
+	printf("Initialized SPI and reading Address: %#X for ID, Current Value: %#X \n", who_am_address, who_am_i_data);
 
-	delay();
-	delay();
-
+	//Drop PE3 to select spi 1
+	GPIOE->BSRR |= GPIO_BSRR_BR_3;
+	printf("Enabled SPI1 by making PE3 low, GPIOE ODR: %#04X \n", GPIOE->ODR);
 	SPI_SendData(&SPI2Handle,  &who_am_address, 1);
 
-	//dummy garbage read
-	SPI_Actual_RX = 0;
-	printf("Before Read Dummy Read: %d \n", dummy_read);
+	printf("Sent data now setting receive Current value of Dummy Read: %#X \n", dummy_read);
 	SPI_ReceiveData(&SPI2Handle, &dummy_read, 1);
-	printf("After Read Dummy Read: %d \n", dummy_read);
 
-	//dummy write to pull read
-	SPI_SendData(&SPI2Handle, &dummy_write, 1);
 
-	SPI_Actual_RX = 1;
-	//Real RX
-	SPI_ReceiveData(&SPI2Handle, &who_am_i_data, 1);
+	printf("Ready for RX now going to probe MEM with a dummy write \n");
+	SPI_SendData(&SPI2Handle,  &dummy_write, 1);
+	printf("After Doing Dummy Write \n");
+
+
+
+
+
+
+
+
+	/*End SPI Read Write*/
+
 	
 
-	printf("System booted with Default clock\n");
 	delay();
 
 	//Turn on Blue LED with pure CMSIS
@@ -168,9 +173,10 @@ void SPI_2_Init() {
 	GPIOE->OTYPER &= ~(1 << GPIO_OTYPER_OT3_Pos);
 	GPIOE->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3;
 	GPIOE->PUPDR &= ~GPIO_PUPDR_PUPDR3_0;
-	//get this pins altfn reg
-	//altfn_reg = 3;
-	//GPIOE->AFR[0] |= 5 << (altfn_reg * 4);
+	
+	//SET PE3 to disable SPI1
+	GPIOE->BSRR |= GPIO_BSRR_BS_3;
+	printf("GPIOE ODR: %#X \n", GPIOE->ODR);
 
 
 	
@@ -210,10 +216,10 @@ void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
 		printf("We Handled SPI EVENT TX: %d \n", AppEv);
 		break;
 	case SPI_EVENT_RX_CMPLT:
-		if(SPI_Actual_RX){
-			printf("We Handled SPI EVENT RX: %d \n", AppEv);
-			printf("WHO Value:  %s", SPI2Handle.pRxBuffer);
-		}
+		//if(SPI_Actual_RX){
+		printf("We Handled SPI EVENT RX: %d \n", AppEv);
+		printf("This is Dummy Read after RX _CPLT:  %X \n", dummy_read);
+		//}
 		break;
 	case SPI_EVENT_OVR_ERR:
 		printf("We Handled SPI EVENT OVR: %d \n", AppEv);

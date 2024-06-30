@@ -1,5 +1,6 @@
 #include "../Inc/32f407_spi.h"
 #include <stdint.h>
+#include <stdio.h>
 
 
 static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle);
@@ -198,6 +199,7 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle){
 	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_TXEIE_Pos);
 	if(temp1 && temp2){
 		// we have an interrupt
+		printf("TXE \n");
 		spi_txe_interrupt_handle(pSPIHandle);
 	}
 	// check for RXNE flag
@@ -205,6 +207,7 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle){
 	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_RXNEIE_Pos);
 	if (temp1 && temp2) {
 		// we have an interrupt
+		printf("RXE \n");
 		spi_rxne_interrupt_handle(pSPIHandle);
 	}
 
@@ -214,6 +217,7 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle){
 	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_ERRIE_Pos);
 	if (temp1 && temp2) {
 		// we have an interrupt
+		printf("OVR\n");
 		spi_ovr_err_interrupt_handle(pSPIHandle);
 	}
 }
