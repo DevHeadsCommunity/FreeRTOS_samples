@@ -33,7 +33,7 @@
 SPI_Handle_t SPI2Handle;
 uint8_t SPI_Actual_RX;
 
-uint8_t dummy_read = 0xAA;
+uint8_t dummy_read;
 
 
 void SPI_2_Init();
@@ -54,24 +54,38 @@ int main(void)
 
 	/*SPI Read Write*/
 
-	uint8_t who_am_address = 0x0D | ((uint8_t)0x80);
+	uint8_t who_am_address = 0x0F | ((uint8_t)0x80);
 
-	uint8_t dummy_write = 0x00;
-	uint8_t who_am_i_data = 0 ;
+	uint8_t dummy_write = 0xff;
+	uint8_t who_am_i_data = 0x00;
 
 	printf("Initialized SPI and reading Address: %#X for ID, Current Value: %#X \n", who_am_address, who_am_i_data);
 
 	//Drop PE3 to select spi 1
 	GPIOE->BSRR |= GPIO_BSRR_BR_3;
+	delay();
 	printf("Enabled SPI1 by making PE3 low, GPIOE ODR: %#04X \n", GPIOE->ODR);
 	SPI_SendData(&SPI2Handle,  &who_am_address, 1);
+
+
+	printf("Sent data now setting receive Current value of RX Read: %#X \n",dummy_read);
+	SPI_ReceiveData(&SPI2Handle, &dummy_read, 1);
 
 	printf("Ready for RX now going to probe MEM with a dummy write \n");
 	SPI_SendData(&SPI2Handle,  &dummy_write, 1);
 	printf("After Doing Dummy Write \n");
 
-	printf("Sent data now setting receive Current value of Dummy Read: %#X \n", dummy_read);
-	SPI_ReceiveData(&SPI2Handle, &dummy_read, 1);
+	printf("Sent data now setting receive Current value of RX Read: %#X \n", who_am_i_data);
+	SPI_ReceiveData(&SPI2Handle, &who_am_i_data, 1);
+
+
+	delay();
+
+	printf("Sent data now setting receive Current value of RX Read: %#X \n", who_am_i_data);
+
+
+		
+
 
 	/*End SPI Read Write*/
 
@@ -128,7 +142,6 @@ void SPI_2_Init() {
 
 	uint32_t altfn_reg;
 
-	// GPIO B for SPI 2
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
 
@@ -210,7 +223,7 @@ void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
 	case SPI_EVENT_RX_CMPLT:
 		//if(SPI_Actual_RX){
 		printf("We Handled SPI EVENT RX: %d \n", AppEv);
-		printf("This is Dummy Read after RX _CPLT:  %X \n", (uint16_t)dummy_read);
+		printf("This is Dummy Read after RX_CPLT:  %X \n", (uint16_t)dummy_read);
 		//}
 		break;
 	case SPI_EVENT_OVR_ERR:

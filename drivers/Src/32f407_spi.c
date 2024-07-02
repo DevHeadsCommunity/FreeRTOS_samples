@@ -156,10 +156,10 @@ uint8_t SPI_ReceiveData(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t L
 	uint8_t state = pSPIHandle->RxState;
 
 	if (state != SPI_BUSY_IN_RX) {
-		// save txbuffer and len
+		// save rxbuffer and len
 		pSPIHandle->pRxBuffer = pRxBuffer;
 		pSPIHandle->RxLen = Len;
-		//Mark spi as busy in transmission
+		//Mark spi as busy in reception
 		pSPIHandle->RxState = SPI_BUSY_IN_RX;
 		// ENABLE RXNEIE BIT
 		pSPIHandle->pSPIx->CR2 |= (1 << SPI_CR2_RXNEIE_Pos);
@@ -289,6 +289,7 @@ static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle) {
 		*(pSPIHandle->pRxBuffer) = (uint8_t)pSPIHandle->pSPIx->DR;
 		pSPIHandle->RxLen--;
 		pSPIHandle->pRxBuffer--;
+		
 	}
 
 	if (!pSPIHandle->RxLen) {
