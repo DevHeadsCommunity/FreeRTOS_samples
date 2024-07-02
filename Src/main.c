@@ -54,7 +54,7 @@ int main(void)
 
 	/*SPI Read Write*/
 
-	uint8_t who_am_address = 0x0F | ((uint8_t)0x80);
+	uint8_t who_am_address = 0x0D | ((uint8_t)0x80);
 
 	uint8_t dummy_write = 0x00;
 	uint8_t who_am_i_data = 0 ;
@@ -66,20 +66,12 @@ int main(void)
 	printf("Enabled SPI1 by making PE3 low, GPIOE ODR: %#04X \n", GPIOE->ODR);
 	SPI_SendData(&SPI2Handle,  &who_am_address, 1);
 
-	printf("Sent data now setting receive Current value of Dummy Read: %#X \n", dummy_read);
-	SPI_ReceiveData(&SPI2Handle, &dummy_read, 1);
-
-
 	printf("Ready for RX now going to probe MEM with a dummy write \n");
 	SPI_SendData(&SPI2Handle,  &dummy_write, 1);
 	printf("After Doing Dummy Write \n");
 
-
-
-
-
-
-
+	printf("Sent data now setting receive Current value of Dummy Read: %#X \n", dummy_read);
+	SPI_ReceiveData(&SPI2Handle, &dummy_read, 1);
 
 	/*End SPI Read Write*/
 
@@ -218,7 +210,7 @@ void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
 	case SPI_EVENT_RX_CMPLT:
 		//if(SPI_Actual_RX){
 		printf("We Handled SPI EVENT RX: %d \n", AppEv);
-		printf("This is Dummy Read after RX _CPLT:  %X \n", dummy_read);
+		printf("This is Dummy Read after RX _CPLT:  %X \n", (uint16_t)dummy_read);
 		//}
 		break;
 	case SPI_EVENT_OVR_ERR:
