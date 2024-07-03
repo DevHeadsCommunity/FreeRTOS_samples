@@ -1,3 +1,5 @@
+#ifndef C789DC2E_6DCB_4711_A0A3_ECCDFF51983F
+#define C789DC2E_6DCB_4711_A0A3_ECCDFF51983F
 #include "../../CMSIS/Inc/main.h"
 #include <stdint.h>
 
@@ -16,3 +18,6 @@ void Lis3Write(uint8_t address, uint8_t data);
 uint8_t Lis3ReadId();
 
 uint8_t Lis3ReadAxis();
+
+
+#endif /* C789DC2E_6DCB_4711_A0A3_ECCDFF51983F */

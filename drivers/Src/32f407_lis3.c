@@ -17,7 +17,11 @@ void SPI_1_Init();
 
 
 
-
+/**
+ * @brief Provides an Initialization API for the LI3DSH Sensor
+ * 
+ * @param Lis3Config - Configuration struct containing the ODR, BDU and Axes
+ */
 void Lis3_Init(Lis3_Config_t Lis3Config){
     //Init communication Lines
     SPI_1_Init();
