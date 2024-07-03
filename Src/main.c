@@ -33,6 +33,8 @@ Lis3_Config_t Accel_1;
 
 
 
+
+
 void delay(void){
 	for(uint32_t i = 0; i < 500000/2; i ++);
 }
@@ -49,9 +51,10 @@ int main(void)
     //choose datarate
     //choose filter 
     //enable axes
-	Accel_1.Lis3_DR = 0x90;
+	Accel_1.Lis3_DR = 0x60;
 	Accel_1.Lis3_BDU = 0x0;
 	Accel_1.Lis3_Axes = 0x7;
+	Accel_1.Lis3_Sensitivity = SENSITIVITY_2G;
 
 	
 
@@ -68,6 +71,14 @@ int main(void)
 	Lis3WriteRead(ctrl_4, &read_settings);
 	printf("ODR and Axes Config Data: %#X \n", read_settings);
 
+	
+
+	delay();
+
+	
+
+
+
 
 
 		
@@ -77,7 +88,6 @@ int main(void)
 
 	
 
-	delay();
 
 	//Turn on Blue LED with pure CMSIS
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
@@ -91,7 +101,8 @@ int main(void)
 
 	delay();
 
-	printf("GPIO D setup and now will turn on blue LED \n");
+	
+
 
 
 
@@ -99,22 +110,25 @@ int main(void)
 
 	GPIOD->BSRR |= GPIO_BSRR_BS_15;
 
-	printf("Blue LED is now ON\n");
-
-	delay();
-	delay();
-	delay();
 	
 
 
-	printf("GPIO D setup will turn off blue LED \n");
+	delay();
+	
+	int32_t x_reading = Lis3ReadAxis('x');
+
+	printf("Combined X axis movement in mg: %d \n", x_reading);
+
+
+	
+
+
+
 
 	GPIOD->BSRR |= GPIO_BSRR_BR_15;
 
-	printf("Blue LED is now OFF \n");
 
-	delay();
-	delay();
+	
 	delay();
 	}
 	return 0;
