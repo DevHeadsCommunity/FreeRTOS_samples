@@ -18,15 +18,28 @@ void SPI_1_Init();
 
 
 
-void Lis3_Init(){
+void Lis3_Init(Lis3_Config_t Lis3Config){
     //Init communication Lines
     SPI_1_Init();
 
-    //LIS3 Setup
-    //choose datarate
-    //choose filter 
-    //enable axes
-    
+    uint8_t config = Lis3Config.Lis3_DR | Lis3Config.Lis3_BDU | Lis3Config.Lis3_Axes;
+    printf("This is config %#X \n", config);
+    uint8_t ctrl_4_address = 0x20;
+    Lis3Write(ctrl_4_address, config);
+
+}
+
+
+void Lis3Write(uint8_t address, uint8_t data) {
+    //Drop PE3 to select spi 1
+	GPIOE->BSRR |= GPIO_BSRR_BR_3;
+
+	SPI_SendData(&SPI1Handle,  &address, 1);
+
+	SPI_SendData(&SPI1Handle,  &data, 1);
+
+    //De assert SPI1
+    GPIOE->BSRR |= GPIO_BSRR_BS_3;
 }
 
 void Lis3WriteRead(uint8_t read_address, uint8_t * read_data) {
@@ -34,7 +47,6 @@ void Lis3WriteRead(uint8_t read_address, uint8_t * read_data) {
 	GPIOE->BSRR |= GPIO_BSRR_BR_3;
     read_address |= 0x80;
 
-	delay();
 	SPI_SendData(&SPI1Handle,  &read_address, 1);
 
 	SPI_ReceiveData(&SPI1Handle, &dummy_read, 1);
@@ -42,13 +54,13 @@ void Lis3WriteRead(uint8_t read_address, uint8_t * read_data) {
 	SPI_SendData(&SPI1Handle,  &dummy_write, 1);
 
 	SPI_ReceiveData(&SPI1Handle, read_data, 1);
-    delay();
     //De assert SPI1
     GPIOE->BSRR |= GPIO_BSRR_BS_3;
 
 }
 
 void SPI_1_Init() {
+    printf("Setting up SPI 1 to MEMS ACC \n");
 
 	uint32_t altfn_reg;
 
@@ -91,12 +103,11 @@ void SPI_1_Init() {
 	
 	//SET PE3 to disable SPI1
 	GPIOE->BSRR |= GPIO_BSRR_BS_3;
-	printf("GPIOE ODR: %#X \n", GPIOE->ODR);
 
 
 	
 
-	printf("SPI 1 to MEMS ACC enabling \n");
+	
 	
 	//SPI_DeInit(SPI1);
 
@@ -113,7 +124,7 @@ void SPI_1_Init() {
 	SPI_Init(&SPI1Handle);
 
 
-	printf("SPI 1 to MEMS ACC enabled \n");
+	printf("SPI 1 to MEMS ACC Setup and Ready \n");
 
 }
 
@@ -124,22 +135,3 @@ void SPI1_IRQHandler(){
 }
 
 
-//application callback
-//Remember to check that this is SPI1 below so we dont affect the other SPI stuff
-void SPI_ApplicationEventCallBack(SPI_Handle_t *pSPIHandle, uint8_t AppEv){
-	// weak implementation for Application to override
-	switch (AppEv) {
-	case SPI_EVENT_TX_CMPLT:
-		printf("We Handled SPI EVENT TX: %d \n", AppEv);
-		break;
-	case SPI_EVENT_RX_CMPLT:
-		//if(SPI_Actual_RX){
-		printf("We Handled SPI EVENT RX: %d \n", AppEv);
-		printf("This is Dummy Read after RX_CPLT:  %X \n", (uint16_t)dummy_read);
-		//}
-		break;
-	case SPI_EVENT_OVR_ERR:
-		printf("We Handled SPI EVENT OVR: %d \n", AppEv);
-		break;
-	}
-}
