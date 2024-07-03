@@ -116,8 +116,8 @@ int main(void)
 	delay();
 	
 	int32_t x_reading = Lis3ReadAxis('x');
-
-	printf("Combined X axis movement in mg: %d \n", x_reading);
+	int8_t today_temp = Lis3ReadTemp();
+	printf("Combined X axis movement in mg: %d and Temp is %d Degrees Celsius \n", x_reading, today_temp);
 
 
 	

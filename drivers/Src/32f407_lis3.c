@@ -16,6 +16,21 @@ uint8_t dummy_write = 0xff;
 
 void SPI_1_Init();
 
+/**
+ * @brief Read the Sensors 8 bit temp sensor and convert the value into a signed
+ * that we then return
+ * 
+ * @return int8_t  The Current Temprature adjusted to degrees Celsius
+ */
+int8_t Lis3ReadTemp(){
+	uint8_t temp_value;
+	Lis3WriteRead(LIS3DSH_OUT_T,  &temp_value);
+
+	int8_t current_degs = (int8_t)temp_value + 25; 
+
+	return current_degs;
+}
+
 int16_t Lis3ReadAxis(char axis){
 	uint8_t h_address, l_address;
         switch (axis) {

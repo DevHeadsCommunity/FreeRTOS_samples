@@ -13,6 +13,7 @@
 #define LIS3DSH_OUT_Y_H    0x2B
 #define LIS3DSH_OUT_Z_L    0x2C
 #define LIS3DSH_OUT_Z_H    0x2D
+#define LIS3DSH_OUT_T      0x0C
 
 #define SENSITIVITY_2G  60  // 0.06 mg/LSB * 1000
 #define SENSITIVITY_4G  120 // 0.12 mg/LSB * 1000
@@ -36,6 +37,8 @@ void Lis3Write(uint8_t address, uint8_t data);
 uint8_t Lis3ReadId();
 
 int16_t Lis3ReadAxis(char axis);
+
+int8_t Lis3ReadTemp();
 
 
 #endif /* C789DC2E_6DCB_4711_A0A3_ECCDFF51983F */
