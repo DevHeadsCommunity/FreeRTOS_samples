@@ -73,6 +73,7 @@ target_sources(
     "Src/sysmem.c"
     "Startup/startup_stm32f407vgtx.s"
     "drivers/Src/32f407_spi.c"
+    "drivers/Src/32f407_lis3.c"
 )
 
 add_custom_command(
