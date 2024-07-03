@@ -14,7 +14,7 @@ typedef struct
 	uint8_t SPI_CPOL;
 	uint8_t SPI_CPHA;
 	uint8_t SPI_SSM;
-	uint8_t SPI_MSBFIRST
+	uint8_t SPI_MSBFIRST;
 
 }SPI_Config_t;
 
