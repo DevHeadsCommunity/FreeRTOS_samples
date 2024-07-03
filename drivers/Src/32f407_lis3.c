@@ -5,6 +5,7 @@
 
 //Globals
 SPI_Handle_t SPI1Handle;
+extern Lis3_Config_t Accel_1;
 uint8_t SPI_Actual_RX;
 
 uint8_t dummy_read;
@@ -15,7 +16,34 @@ uint8_t dummy_write = 0xff;
 
 void SPI_1_Init();
 
+int16_t Lis3ReadAxis(char axis){
+	uint8_t h_address, l_address;
+        switch (axis) {
+        case 'x':
+          h_address = LIS3DSH_OUT_X_H;
+          l_address = LIS3DSH_OUT_X_L;
+          break;
+        case 'y':
+          h_address = LIS3DSH_OUT_Y_H;
+          l_address = LIS3DSH_OUT_Y_L;
+          break;
+        case 'z':
+          h_address = LIS3DSH_OUT_Z_H;
+          l_address = LIS3DSH_OUT_Z_L;
+          break;
+		defualt:
+			printf("Invalid axis \n ");
+			return -5555555;
+        }
+    uint8_t  axis_h, axis_l; 
+	int16_t axis_data = 0;
+	Lis3WriteRead( l_address,  &axis_l);
+	Lis3WriteRead(h_address, &axis_h);
+	axis_data =  (int16_t)(axis_h << 8 | axis_l);
+	int16_t mgdata = axis_data * Accel_1.Lis3_Sensitivity / 1000;
 
+	return mgdata;
+}
 
 /**
  * @brief Provides an Initialization API for the LI3DSH Sensor
