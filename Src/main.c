@@ -74,17 +74,34 @@ int main(void)
 	
 
 	delay();
+	/*End SPI Read Write*/
+
+	/* ADC*/
+	// clock 
+	RCC->APB2ENR |= (1 << RCC_APB2ENR_ADC1EN_Pos);
+	// resolution
+	ADC1->CR1 &= ~(3 << ADC_CR1_RES_Pos);
+	//default is 1 conversion only 
+	
+	// Clear bits 4:0
+	ADC1->SQR3 &= ~(0x1F);
+	uint32_t channel_no = 16;
+	ADC1->SQR3 |= (channel_no & 0x1F);
+
+	uint16_t internal_temp = 0;
+
+	// Sample rate 
+	ADC1->SMPR1 |= (7 << ADC_SMPR1_SMP16_Pos);
+
+	//start ADC1
+	ADC1->CR2 |= (1 << ADC_CR2_ADON_Pos);
+
+	
 
 	
 
 
-
-
-
-		
-
-
-	/*End SPI Read Write*/
+	/* ADC END */
 
 	
 
@@ -118,6 +135,19 @@ int main(void)
 	int32_t x_reading = Lis3ReadAxis('x');
 	int8_t today_temp = Lis3ReadTemp();
 	printf("Combined X axis movement in mg: %d and Temp is %d Degrees Celsius \n", x_reading, today_temp);
+
+	printf("Internal temp before measuring %d \n", internal_temp);
+
+
+	// Start conversion with CR2
+	ADC1->CR2 |= (1 << ADC_CR2_SWSTART_Pos);
+
+	// wait for conversion
+	while(! (ADC1->SR & (1 << ADC_SR_EOC_Pos)));
+
+	internal_temp = ADC1->DR;
+
+	printf("Internal temp after measuring %d \n", internal_temp);
 
 
 	
