@@ -26,7 +26,15 @@ int8_t Lis3ReadTemp(){
 	uint8_t temp_value;
 	Lis3WriteRead(LIS3DSH_OUT_T,  &temp_value);
 
-	int8_t current_degs = (int8_t)temp_value + 25; 
+	 // Convert uint8_t to int8_t
+    int8_t signed_temp_value = (int8_t)temp_value;
+
+	  // If the unsigned value is greater than 127, it should be negative in 2's complement
+    if (temp_value > 127) {
+        signed_temp_value -= 256;
+    }
+
+	int current_degs = signed_temp_value + 25; 
 
 	return current_degs;
 }
