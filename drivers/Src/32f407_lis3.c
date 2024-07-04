@@ -174,7 +174,7 @@ void SPI_1_Init() {
 	SPI1Handle.SPIConfig.SPI_CPOL = SPI_CPOL_LOW;
 	SPI1Handle.SPIConfig.SPI_CPHA = SPI_CPHA_LOW;
 	SPI1Handle.SPIConfig.SPI_SSM = SPI_SSM_EN; // software slave management for NSS pin
-	SPI1Handle.SPIConfig.SPI_MSBFIRST = ENABLE;
+	SPI1Handle.SPIConfig.SPI_MSBFIRST = ASSERT;
 
 	SPI_Init(&SPI1Handle);
 

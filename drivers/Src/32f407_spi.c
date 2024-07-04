@@ -9,7 +9,7 @@ static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle);
 
 /* Clock control for SPI */
 void SPI_PCLK_CTRL(SPI_TypeDef *pSPIx, uint8_t EnorDi){
-    if(EnorDi == ENABLE) {
+    if(EnorDi == ASSERT) {
         if(pSPIx == SPI1){
             RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
         } else  if(pSPIx == SPI2){
@@ -42,7 +42,7 @@ void SPI_PCLK_CTRL(SPI_TypeDef *pSPIx, uint8_t EnorDi){
 
 void SPI_Init(SPI_Handle_t *pSPIHandle){
 	/*SPI Experiment*/
-	SPI_PCLK_CTRL(pSPIHandle->pSPIx,ENABLE);
+	SPI_PCLK_CTRL(pSPIHandle->pSPIx,ASSERT);
 
     //CR1 temp data 
     uint32_t tempreg = 0;
@@ -81,7 +81,7 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
 	tempreg |= pSPIHandle->SPIConfig.SPI_SSM << SPI_CR1_SSM_Pos;
 
 	//LSB First
-	if (pSPIHandle->SPIConfig.SPI_MSBFIRST == DISABLE) {
+	if (pSPIHandle->SPIConfig.SPI_MSBFIRST == REFUTE) {
 		tempreg |= (pSPIHandle->SPIConfig.SPI_MSBFIRST << SPI_CR1_LSBFIRST_Pos);
 	}else {
 		tempreg &= ~(1 << SPI_CR1_LSBFIRST_Pos);
@@ -91,10 +91,10 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
 	pSPIHandle->pSPIx->CR1 = tempreg;
 
 	// enable SSOE so we have outtput
-	SPI_SSOEConfig(pSPIHandle->pSPIx, ENABLE);
+	SPI_SSOEConfig(pSPIHandle->pSPIx, ASSERT);
 
 	//Enable SSI so the hardware controls the cs pin
-	pSPIHandle->pSPIx->CR1 |= (ENABLE << SPI_CR1_SSI_Pos);
+	pSPIHandle->pSPIx->CR1 |= (ASSERT << SPI_CR1_SSI_Pos);
 
 
 	//silly delay 
@@ -185,7 +185,7 @@ uint8_t SPI_ReceiveData(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t L
  * @note
  *  */
 void SPI_SSOEConfig(SPI_TypeDef *pSPIx, uint8_t EnorDi) {
-	if (EnorDi == ENABLE) {
+	if (EnorDi == ASSERT) {
 		pSPIx->CR2 |= (1 << SPI_CR2_SSOE_Pos);
 	} else {
 		pSPIx->CR2 &= ~(1 << SPI_CR2_SSOE_Pos);

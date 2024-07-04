@@ -1,8 +1,17 @@
 #include "stm32f407xx.h"
 #include <stddef.h>
-
-#define ENABLE 1
-#define DISABLE 0
+#include <stdint.h>
 
 
 
+
+
+
+
+
+
+/* USER INCLUDES*/
+#include "../../drivers/Inc/32f407_adc_regular.h"
+#include "../../drivers/Inc/32f407_lis3.h"
+#include "../../drivers/Inc/32f407_spi.h"
+/*END USER INCLUDES*/

@@ -37,6 +37,15 @@
 extern "C" {
 #endif /* __cplusplus */
 
+
+#include <stddef.h>
+#include <stdint.h>
+
+
+
+
+
+
 /** @addtogroup Configuration_section_for_CMSIS
   * @{
   */
@@ -15578,6 +15587,8 @@ typedef struct
 #define USB_OTG_HS_MAX_IN_ENDPOINTS                    6U    /* Including EP0 */
 #define USB_OTG_HS_MAX_OUT_ENDPOINTS                   6U    /* Including EP0 */
 #define USB_OTG_HS_TOTAL_FIFO_SIZE                     4096U /* in Bytes */
+#define ASSERT 1U /* AS an On State */
+#define REFUTE 0U /* As an Off State */
 /******************************************************************************/
 /*  For a painless codes migration between the STM32F4xx device product       */
 /*  lines, the aliases defined below are put in place to overcome the         */
@@ -15590,6 +15601,10 @@ typedef struct
 
 /* Aliases for __IRQHandler */
 #define FMC_IRQHandler        FSMC_IRQHandler
+
+
+
+
 
 /**
   * @}

@@ -1,6 +1,6 @@
 #ifndef C789DC2E_6DCB_4711_A0A3_ECCDFF51983F
 #define C789DC2E_6DCB_4711_A0A3_ECCDFF51983F
-#include "../../CMSIS/Inc/main.h"
+#include "../../CMSIS/Inc/stm32f407xx.h"
 #include <stdint.h>
 
 // LIS3DSH register addresses
