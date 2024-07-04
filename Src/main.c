@@ -17,7 +17,13 @@
  */
 
 #include "../CMSIS/Inc/main.h"
-#include "../drivers/Inc/32f407_lis3.h"
+
+#include "../CMSIS/Inc/stm32f407xx.h"
+
+void delay(void){
+	for(uint32_t i = 0; i < 500000/2; i ++);
+}
+
 
 //for print f
 #include <stdint.h>
@@ -31,9 +37,6 @@
 Lis3_Config_t Accel_1;
 
 
-void delay(void){
-	for(uint32_t i = 0; i < 500000/2; i ++);
-}
 
 
 
@@ -45,80 +48,21 @@ int main(void)
 	//enable FPU
 	SCB->CPACR |= ((3UL << 20U)|(3UL << 22U));
 
-	// Configure ADC so we accept one in input on one ch
-	//enable ADC1 clock
-	RCC->APB2ENR |= (1 << RCC_APB2ENR_ADC1EN_Pos);
-	//choose 12 bit resolution
-	ADC1->CR1 &= ~(3 << ADC_CR1_RES_Pos);
-	// conversion mode, single default
-	ADC1->CR2 &= ~(1  << ADC_CR2_CONT_Pos);
-
-	// set channel to be read ADC1_IN16
-	ADC1->SQR3 &= ~(0x1F);
-	uint32_t channel_number = 16;
-	ADC1->SQR3 |= (channel_number  & 0x1F);
-
-	// Sample Rate
-	ADC1->SMPR1 |= (7 << ADC_SMPR1_SMP16_Pos);
-
-	//Enable temp sensor
-	ADC->CCR |= (1 << ADC_CCR_TSVREFE_Pos);
-
-	//Start ADC1
-	ADC1->CR2 |= (1 << ADC_CR2_ADON_Pos);
-
-	// give ADC and Temp Sensor time to ramp up
-	delay();
-
-	
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//LIS3 Setup
-    //choose datarate
-    //choose filter 
-    //enable axes
+	/*LIS3 Setup*/
+    //choose datarate, filter, axes
 	Accel_1.Lis3_DR = 0x60;
 	Accel_1.Lis3_BDU = 0x0;
 	Accel_1.Lis3_Axes = 0x7;
 	Accel_1.Lis3_Sensitivity = SENSITIVITY_2G;
+	/* END LIS3 Setup*/
+
+	/*ADC SETup*/
+
+	AdcInit();
+
+	/* End ADC SETUP */
 
 	
 
@@ -134,10 +78,6 @@ int main(void)
 	printf("ID Data: %#X \n", read_data);
 	Lis3WriteRead(ctrl_4, &read_settings);
 	printf("ODR and Axes Config Data: %#X \n", read_settings);
-
-	
-
-	delay();
 	/*End SPI Read Write*/
 
 
@@ -177,40 +117,16 @@ int main(void)
 	
 	float x_reading = Lis3ReadAxis('x');
 	int8_t today_temp = Lis3ReadTemp();
-	printf("Combined X axis movement in mg: %.1f and Temp is %d Degrees Celsius \n", x_reading, today_temp);
-
-	// Read input and print it
-	ADC1->CR2  |= (1 << ADC_CR2_SWSTART_Pos);
-
-	// wait for end of conversion
-	while(!(ADC1->SR & (1 << ADC_SR_EOC_Pos)));
-
-	//read adc_raw_input
-	uint16_t temperature_raw = ADC1->DR;
-
-	printf("Some Values from ADC COnversion %d \n", temperature_raw);
-	// do floating point arithmetic on reading of input
-	// print the above
-
-	
-
-	float Vsense = (float)temperature_raw/4096 * 3.3;
-
-	printf("Raw value to Voltage from ADC COnversion %.1f \n", Vsense);
-
-	float VDeg =((Vsense - 0.76)/0.25) + 25;
+	char txt[100];
+	sprintf(txt, "Combined X axis movement in mg: %.1f and Temp is %dC Degrees Celsius \n", x_reading, today_temp);
+	puts(txt);
 
 
-	
-	printf("Raw Voltage from ADC to Temp in Degrees Celcius: %.1f \n", VDeg);
-	
+	delay();
+	delay();
 
 
-
-	
-
-
-
+	AdcReadChannel(16);
 
 	GPIOD->BSRR |= GPIO_BSRR_BR_15;
 
@@ -220,9 +136,3 @@ int main(void)
 	}
 	return 0;
 }
-
-
-
-
-
-
