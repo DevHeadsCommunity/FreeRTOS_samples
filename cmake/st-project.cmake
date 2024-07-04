@@ -52,6 +52,7 @@ target_link_directories(
     ${TARGET_NAME} PRIVATE
 )
 
+
 target_link_options(
     ${TARGET_NAME} PRIVATE
     "$<$<CONFIG:Debug>:-mcpu=cortex-m4>"
@@ -63,6 +64,9 @@ target_link_options(
     -T
     "$<$<CONFIG:Debug>:${PROJECT_SOURCE_DIR}/STM32F407VGTX_FLASH.ld>"
     "$<$<NOT:$<CONFIG:Debug>>:${PROJECT_SOURCE_DIR}/STM32F407VGTX_FLASH.ld>"
+    "-u_printf_float"
+    "-lc"
+    "-lm"
 )
 
 target_sources(
@@ -72,8 +76,8 @@ target_sources(
     "Src/syscalls.c"
     "Src/sysmem.c"
     "Startup/startup_stm32f407vgtx.s"
-    "drivers/Src/32f407_spi.c"
     "drivers/Src/32f407_lis3.c"
+    "drivers/Src/32f407_spi.c"
 )
 
 add_custom_command(
