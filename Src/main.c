@@ -175,9 +175,9 @@ int main(void)
 
 	delay();
 	
-	int32_t x_reading = Lis3ReadAxis('x');
+	float x_reading = Lis3ReadAxis('x');
 	int8_t today_temp = Lis3ReadTemp();
-	printf("Combined X axis movement in mg: %d and Temp is %d Degrees Celsius \n", x_reading, today_temp);
+	printf("Combined X axis movement in mg: %.1f and Temp is %d Degrees Celsius \n", x_reading, today_temp);
 
 	// Read input and print it
 	ADC1->CR2  |= (1 << ADC_CR2_SWSTART_Pos);

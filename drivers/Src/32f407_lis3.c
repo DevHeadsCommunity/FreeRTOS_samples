@@ -31,7 +31,7 @@ int8_t Lis3ReadTemp(){
 	return current_degs;
 }
 
-int16_t Lis3ReadAxis(char axis){
+float Lis3ReadAxis(char axis){
 	uint8_t h_address, l_address;
         switch (axis) {
         case 'x':
@@ -55,7 +55,7 @@ int16_t Lis3ReadAxis(char axis){
 	Lis3WriteRead( l_address,  &axis_l);
 	Lis3WriteRead(h_address, &axis_h);
 	axis_data =  (int16_t)(axis_h << 8 | axis_l);
-	int16_t mgdata = axis_data * Accel_1.Lis3_Sensitivity / 1000;
+	float mgdata = (float)axis_data * Accel_1.Lis3_Sensitivity / 1000;
 
 	return mgdata;
 }
