@@ -2,6 +2,14 @@
 #define B3BA84CC_5247_4A36_93E3_D2E2F073F616
 
 #include "../../CMSIS/Inc/stm32f407xx.h"
+#include <stdint.h>
+
+//APPLICATION STATES 
+#define I2C_READY			0
+#define I2C_BUSY_IN_RX		1
+#define I2C_BUSY_IN_TX		2
+
+
 
 
 typedef struct {
@@ -17,6 +25,14 @@ typedef struct {
 typedef struct {
 	I2C_TypeDef *pI2Cx;
 	I2C_Config_t I2C_Config;
+	uint8_t *pTxBuffer;
+	uint8_t *pRxBuffer;
+	uint32_t RxLen;
+	uint32_t TxLen;
+	uint8_t TxRxState;
+	uint8_t DevAddr;
+	uint32_t RxSize;
+	uint8_t Sr;
 }I2C_Handle_t;
 
 
@@ -28,6 +44,20 @@ typedef struct {
 #define I2C_SCL_SPEED_SM 100000
 #define I2C_SCL_SPEED_FM 400000
 
+/*
+ * I2C application events macros
+ */
+#define I2C_EV_TX_CMPLT  	 	0
+#define I2C_EV_RX_CMPLT  	 	1
+#define I2C_EV_STOP       		2
+#define I2C_ERROR_BERR 	 		3
+#define I2C_ERROR_ARLO  		4
+#define I2C_ERROR_AF    		5
+#define I2C_ERROR_OVR   		6
+#define I2C_ERROR_TIMEOUT 		7
+#define I2C_EV_DATA_REQ         8
+#define I2C_EV_DATA_RCV         9
+
 
 //APIs
 // Init and DeInit
@@ -38,11 +68,17 @@ void I2C_DeInit(I2C_TypeDef *pI2Cx);
 void I2C_PCLK_CTRL(I2C_TypeDef *pI2Cx, uint8_t EnorDi);
 
 // Data TX and RX
-void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint32_t Len, uint8_t SlaveAddr);
+uint8_t I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint32_t Len, uint8_t SlaveAddr, uint8_t Sr);
+uint8_t I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint32_t Len, uint8_t SlaveAddr, uint8_t Sr);
+void I2C_CloseReceiveData(I2C_Handle_t *pI2CHandle);
+void I2C_CloseSendData(I2C_Handle_t *pI2CHandle);
+
 
 // Other Peipheral control APIs
 void I2C_PeripheralControl(I2C_TypeDef *pI2cx, uint8_t EnorDi);
 uint8_t I2C_GetFlagStatus(I2C_TypeDef *pI2Cx, uint32_t FlagName);
+void I2C_ManageAcking(I2C_TypeDef *pI2Cx, uint8_t EnorDi);
+void I2C_GenerateStopCondition(I2C_TypeDef *pI2Cx);
 uint32_t RCC_GetPCLK1Value(void);
 
 uint8_t I2C_GetFlagStatus(I2C_TypeDef *pI2Cx, uint32_t FlagName);
