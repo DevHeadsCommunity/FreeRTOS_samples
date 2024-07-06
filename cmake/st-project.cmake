@@ -79,6 +79,7 @@ target_sources(
     "drivers/Src/32f407_lis3.c"
     "drivers/Src/32f407_spi.c"
     "drivers/Src/32f407_adc_regular.c"
+    "drivers/Src/32f407_i2c.c"
 )
 
 add_custom_command(
