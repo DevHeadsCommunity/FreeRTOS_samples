@@ -141,10 +141,13 @@ void I2C_Init(I2C_Handle_t *pI2CHandle){
 	//Enable Interrupts only non blocking for now
 	if(pI2CHandle->pI2Cx == I2C1){
 		NVIC_EnableIRQ(I2C1_EV_IRQn);
+		NVIC_EnableIRQ(I2C1_ER_IRQn);
 	} else if(pI2CHandle->pI2Cx == I2C2){
 		NVIC_EnableIRQ(I2C2_EV_IRQn);
+		NVIC_EnableIRQ(I2C2_ER_IRQn);
 	} else if(pI2CHandle->pI2Cx == I2C3){
 		NVIC_EnableIRQ(I2C3_EV_IRQn);
+		NVIC_EnableIRQ(I2C3_ER_IRQn);
 	}
 
 	// Enable Peripheral for use now
