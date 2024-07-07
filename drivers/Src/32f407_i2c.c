@@ -425,3 +425,67 @@ void I2C_CloseSendData(I2C_Handle_t *pI2CHandle)
 	pI2CHandle->pTxBuffer = NULL;
 	pI2CHandle->TxLen = 0;
 }
+
+//IRQ Handling APIs
+void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
+	uint32_t EVENT, BUFFER , temp1;
+	EVENT = pI2CHandle->pI2Cx->CR2 & (1 << I2C_CR2_ITEVTEN_Pos);
+	BUFFER = pI2CHandle->pI2Cx->CR2 & (1 << I2C_CR2_ITBUFEN_Pos);
+	
+
+
+	/*
+	*	Handle SB event
+		Since it only happens in Master mode DevAddress will be the slave
+	*/
+	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_SB_Pos);
+	if(EVENT && temp1)
+	{
+		//read SR1 and write DR
+		uint32_t temp = pI2CHandle->pI2Cx->SR1;
+
+		if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX) {
+			I2C_ExecuteAddressPhaseWrite(pI2CHandle->pI2Cx, pI2CHandle->DevAddr);
+		} else if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX) {
+			I2C_ExecuteAddressPhaseRead(pI2CHandle->pI2Cx, pI2CHandle->DevAddr);
+		}
+
+	}
+
+	//Handle ADDR
+	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_ADDR_Pos);
+	if(EVENT && temp1)
+	{
+
+	}
+
+	//Handle BTF 
+	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_BTF_Pos);
+	if(EVENT && temp1)
+	{
+
+	}
+	// Handle Stop
+	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_STOPF_Pos);
+	if(EVENT && temp1)
+	{
+
+	}
+	//TXE
+	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_TXE_Pos);
+	if(EVENT && BUFFER && temp1)
+	{
+
+	}
+	//RXNE
+	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_RXNE_Pos);
+	if(EVENT && BUFFER && temp1)
+	{
+
+	}
+
+	
+
+	
+}
+void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle);

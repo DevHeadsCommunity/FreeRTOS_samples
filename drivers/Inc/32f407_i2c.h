@@ -74,6 +74,11 @@ void I2C_CloseReceiveData(I2C_Handle_t *pI2CHandle);
 void I2C_CloseSendData(I2C_Handle_t *pI2CHandle);
 
 
+//IRQ Handling APIs
+void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle);
+void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle);
+
+
 // Other Peipheral control APIs
 void I2C_PeripheralControl(I2C_TypeDef *pI2cx, uint8_t EnorDi);
 uint8_t I2C_GetFlagStatus(I2C_TypeDef *pI2Cx, uint32_t FlagName);
