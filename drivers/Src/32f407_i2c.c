@@ -140,6 +140,41 @@ void I2C_Init(I2C_Handle_t *pI2CHandle){
 
 }
 
+/******
+ * @fn I2C_PCLK_CTRL
+ *
+ * @brief  Enables the clock Disables a I2C peripheral clock
+ *
+ * @params[pI2Cx] port handle structure
+ * @params[EnorDi] Enable or Disable
+
+ *
+ * @return void
+ * @note
+ *  */
+void I2C_PCLK_CTRL(I2C_TypeDef *pI2Cx, uint8_t EnorDi){
+	if(EnorDi == ASSERT){
+		if(pI2Cx == I2C1){
+			RCC->APB1ENR |= (1 << RCC_APB1ENR_I2C1EN_Pos);
+		} else if(pI2Cx == I2C2){
+			RCC->APB1ENR |= (1 << RCC_APB1ENR_I2C2EN_Pos);
+		} else {
+			RCC->APB1ENR |= (1 << RCC_APB1ENR_I2C2EN_Pos);
+		}
+	} else {
+		if (pI2Cx == I2C1) {
+			RCC->APB1ENR &= ~(1 << RCC_APB1ENR_I2C1EN_Pos);
+
+		} else if (pI2Cx == I2C2) {
+			RCC->APB1ENR &= ~(1 << RCC_APB1ENR_I2C1EN_Pos);
+
+		} else {
+			RCC->APB1ENR &= ~(1 << RCC_APB1ENR_I2C1EN_Pos);
+
+		}
+	}
+}
+
 
 /******
  * @fn I2C_DeInit
@@ -292,7 +327,7 @@ static void I2C_ClearADDRFlag(I2C_Handle_t *pI2CHandle )
 {
 	uint32_t dummy_read;
 	//check for device mode
-	if(pI2CHandle->pI2Cx->SR2 & ( 1 << I2C_SR2_MSL))
+	if(pI2CHandle->pI2Cx->SR2 & ( 1 << I2C_SR2_MSL_Pos))
 	{
 		//device is in master mode
 		if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX)
@@ -378,8 +413,7 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle )
 	if(pI2CHandle->RxLen == 0 )
 	{
 		//close the I2C data reception and notify the application
-
-		//1. generate the stop condition
+		//1. generate the stop condition if repeated start is not allowed
 		if(pI2CHandle->Sr == REFUTE)
 			I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 
@@ -394,10 +428,10 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle )
 
 void I2C_CloseReceiveData(I2C_Handle_t *pI2CHandle)
 {
-	//Implement the code to disable ITBUFEN Control Bit
+	//disable ITBUFEN Control Bit
 	pI2CHandle->pI2Cx->CR2 &= ~( 1 << I2C_CR2_ITBUFEN_Pos);
 
-	//Implement the code to disable ITEVFEN Control Bit
+	//disable ITEVFEN Control Bit
 	pI2CHandle->pI2Cx->CR2 &= ~( 1 << I2C_CR2_ITEVTEN_Pos);
 
 	pI2CHandle->TxRxState = I2C_READY;
@@ -431,8 +465,6 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	uint32_t EVENT, BUFFER , temp1;
 	EVENT = pI2CHandle->pI2Cx->CR2 & (1 << I2C_CR2_ITEVTEN_Pos);
 	BUFFER = pI2CHandle->pI2Cx->CR2 & (1 << I2C_CR2_ITBUFEN_Pos);
-	
-
 
 	/*
 	*	Handle SB event
@@ -442,45 +474,82 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	if(EVENT && temp1)
 	{
 		//read SR1 and write DR
-		uint32_t temp = pI2CHandle->pI2Cx->SR1;
-
 		if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX) {
 			I2C_ExecuteAddressPhaseWrite(pI2CHandle->pI2Cx, pI2CHandle->DevAddr);
 		} else if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX) {
 			I2C_ExecuteAddressPhaseRead(pI2CHandle->pI2Cx, pI2CHandle->DevAddr);
 		}
-
 	}
 
-	//Handle ADDR
+	/**
+	 * @brief Handle the Addressing Event
+	 *  - When in Master we send the address 
+	 *	- When in Slave we attempt to match our own address 
+	 */	
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_ADDR_Pos);
 	if(EVENT && temp1)
 	{
-
+		// Handle ADDR
+		I2C_ClearADDRFlag(pI2CHandle);
 	}
 
 	//Handle BTF 
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_BTF_Pos);
 	if(EVENT && temp1)
 	{
+		// Handle TX mode
+		if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX) {
+			if(pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_TXE_Pos)){
+				if(pI2CHandle->TxLen == 0) {
+					if(pI2CHandle->Sr == REFUTE) 
+						I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
+					
+					//close tx
+					I2C_CloseSendData(pI2CHandle);
+
+					//notify app
+					I2C_ApplicationEventCallback(pI2CHandle, I2C_EV_TX_CMPLT);
+				}
+				
+			}
+		}
+
+		//Handle RX mode 
+		if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX) {
+			// Nothing to do
+		}
 
 	}
 	// Handle Stop
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_STOPF_Pos);
 	if(EVENT && temp1)
 	{
+		// TODO Not used in Master 
 
 	}
 	//TXE
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_TXE_Pos);
 	if(EVENT && BUFFER && temp1)
 	{
+		// proceed if master
+		if(pI2CHandle->pI2Cx->SR2 & (1 << I2C_SR2_MSL_Pos)){
+			if(pI2CHandle->TxRxState ==  I2C_BUSY_IN_TX){
+				I2C_MasterHandleTXEInterrupt(pI2CHandle);
+			}
+		}
+		
 
 	}
 	//RXNE
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_RXNE_Pos);
 	if(EVENT && BUFFER && temp1)
 	{
+		//check if master
+		if(pI2CHandle->pI2Cx->SR2 & (1 << I2C_SR2_MSL_Pos)){
+			if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX){
+				I2C_MasterHandleRXNEInterrupt(pI2CHandle);
+			}
+		}
 
 	}
 

@@ -32,6 +32,7 @@ typedef struct {
 	uint8_t TxRxState;
 	uint8_t DevAddr;
 	uint32_t RxSize;
+	/* Repeated Start Generation*/
 	uint8_t Sr;
 }I2C_Handle_t;
 
