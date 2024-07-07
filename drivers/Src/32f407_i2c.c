@@ -1,5 +1,5 @@
 #include "../Inc/32f407_i2c.h"
-#include <stdint.h>
+#include <stdio.h>
 
 
 //array of ahb facors
@@ -569,4 +569,86 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 
 	
 }
-void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle);
+
+/**
+ * @brief  Handle i2c errors
+ * 
+ * @param pI2CHandle 
+ */
+void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle) {
+
+
+	uint32_t temp1,temp2;
+
+    //Know the status of  ITERREN control bit in the CR2
+	temp2 = (pI2CHandle->pI2Cx->CR2) & ( 1 << I2C_CR2_ITERREN_Pos);
+
+
+/***********************Check for Bus error************************************/
+	temp1 = (pI2CHandle->pI2Cx->SR1) & ( 1<< I2C_SR1_BERR_Pos);
+	if(temp1  && temp2 )
+	{
+		printf("This is Bus error \n");
+
+		//Implement the code to clear the buss error flag
+		pI2CHandle->pI2Cx->SR1 &= ~( 1 << I2C_SR1_BERR_Pos);
+
+		//Implement the code to notify the application about the error
+	   I2C_ApplicationEventCallback(pI2CHandle,I2C_ERROR_BERR);
+	}
+
+/***********************Check for arbitration lost error************************************/
+	temp1 = (pI2CHandle->pI2Cx->SR1) & ( 1 << I2C_SR1_ARLO_Pos);
+	if(temp1  && temp2)
+	{
+		printf("This is arbitration lost error \n");
+
+		//Implement the code to clear the arbitration lost error flag
+		pI2CHandle->pI2Cx->SR1 &= ~( 1 << I2C_SR1_ARLO_Pos);
+
+		//Implement the code to notify the application about the error
+		I2C_ApplicationEventCallback(pI2CHandle,I2C_ERROR_ARLO);
+
+	}
+
+/***********************Check for ACK failure  error************************************/
+
+	temp1 = (pI2CHandle->pI2Cx->SR1) & ( 1 << I2C_SR1_AF_Pos);
+	if(temp1  && temp2)
+	{
+		printf("This is ACK failure error \n");
+
+	    //Implement the code to clear the ACK failure error flag
+		pI2CHandle->pI2Cx->SR1 &= ~( 1 << I2C_SR1_AF_Pos);
+
+		//Implement the code to notify the application about the error
+		I2C_ApplicationEventCallback(pI2CHandle,I2C_ERROR_AF);
+	}
+
+/***********************Check for Overrun/underrun error************************************/
+	temp1 = (pI2CHandle->pI2Cx->SR1) & ( 1 << I2C_SR1_OVR_Pos);
+	if(temp1  && temp2)
+	{
+		printf("This is Overrun/underrun \n");
+
+	    //Implement the code to clear the Overrun/underrun error flag
+		pI2CHandle->pI2Cx->SR1 &= ~( 1 << I2C_SR1_OVR_Pos);
+
+		//Implement the code to notify the application about the error
+		I2C_ApplicationEventCallback(pI2CHandle,I2C_ERROR_OVR);
+	}
+
+/***********************Check for Time out error************************************/
+	temp1 = (pI2CHandle->pI2Cx->SR1) & ( 1 << I2C_SR1_TIMEOUT_Pos);
+	if(temp1  && temp2)
+	{
+		printf("This is Time out error \n");
+
+	    //Implement the code to clear the Time out error flag
+		pI2CHandle->pI2Cx->SR1 &= ~( 1 << I2C_SR1_TIMEOUT_Pos);
+
+		//Implement the code to notify the application about the error
+		I2C_ApplicationEventCallback(pI2CHandle,I2C_ERROR_TIMEOUT);
+	}
+
+}
