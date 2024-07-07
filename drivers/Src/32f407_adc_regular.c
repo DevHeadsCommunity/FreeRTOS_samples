@@ -8,7 +8,6 @@
 
 int8_t AdcInit(){
 
-	DelayTimer_t AdcTimer;
 
 	// Configure ADC so we accept one in input on one ch
 	//enable ADC1 clock
@@ -32,8 +31,7 @@ int8_t AdcInit(){
 	//Start ADC1
 	ADC1->CR2 |= (1 << ADC_CR2_ADON_Pos);
 
-	// give ADC and Temp Sensor time to ramp up
-	Timer_Start(&AdcTimer, 2);
+
 }
 
 uint16_t AdcReadChannel(uint8_t  ChannelNo){

@@ -98,8 +98,7 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
 	pSPIHandle->pSPIx->CR1 |= (ASSERT << SPI_CR1_SSI_Pos);
 
 
-	DelayTimer_t spiTimer;
-	Timer_Start(&spiTimer, 2);
+
 
 	//Enable Interrupts
     if(pSPIHandle->pSPIx == SPI1){

@@ -31,13 +31,9 @@
 Lis3_Config_t Accel_1;
 
 
-volatile uint8_t SHOULD_READ = 0;
+volatile uint8_t SHOULD_READ = 1;
 
 
-/*Setup some timers*/
-#define MAX_TIMERS 10
-DelayTimer_t timers[MAX_TIMERS];
-uint32_t numTimers = 0;
 
 static void ConfigureTim7(void);
 
@@ -51,13 +47,11 @@ int main(void)
 	ConfigureTim7();
 	
 
-	//Make a timer for main 
-	DelayTimer_t mainTimer;
-	timers[numTimers++] = mainTimer;
 
 
 
-	//Blue LED with pure CMSIS
+
+	//Blue LED CMSIS
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
 	GPIOD->MODER |= GPIO_MODER_MODER15_0;
 	GPIOD->MODER &= ~GPIO_MODER_MODER15_1;
@@ -66,6 +60,9 @@ int main(void)
 	GPIOD->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR15_1;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
+
+	GPIOD->BSRR |= GPIO_BSRR_BS_15;
+
 
 	
 	//enable FPU
@@ -82,7 +79,7 @@ int main(void)
 
 	uint32_t altfn_reg;
 
-	//Turn on Blue LED with pure CMSIS;
+	//Setup I2c
 	GPIOB->MODER |= GPIO_MODER_MODER6_1;
 	GPIOB->OTYPER |= (1 << GPIO_OTYPER_OT6_Pos);
 	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_1;
@@ -133,16 +130,35 @@ int main(void)
 	Lis3WriteRead(ctrl_4, &read_settings);
 	printf("ODR and Axes Config Data: %#X \n", read_settings);
 	/*End SPI Read Write*/
-	Timer_Start(&mainTimer, 2);
+	
+	//Make a timer for main 
+	DelayTimer_t mainTimer;
+	Timer_Start(&mainTimer, 20);
+	uint32_t myTimNum = numTimers++;
+	timers[myTimNum] = mainTimer;
+	
+	GPIOD->BSRR |= GPIO_BSRR_BR_15;
 	
 	while(1) {
 		//float x_reading = Lis3ReadAxis('x');
 		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
 
 		if(SHOULD_READ == 1){
-			SHOULD_READ = 0;
+			GPIOD->BSRR |= GPIO_BSRR_BS_15;
+			
+
+			while(!Timer_IsElapsed(&mainTimer, myTimNum)) {
+				//we should yield to other tasks here ...	
+				__WFI(); // Let's sleep we can be interrupted but will wait
+			}
+			
 			int8_t today_temp = Lis3ReadTemp();
 			printf("Temp is %dC Degrees Celsius \n", today_temp);
+			
+			GPIOD->BSRR |= GPIO_BSRR_BR_15;
+			SHOULD_READ = 0;
+
+
 			//AdcReadChannel(16);
 		}
 
