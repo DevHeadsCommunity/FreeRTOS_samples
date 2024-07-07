@@ -1,17 +1,18 @@
-#include "../Inc/32f407_adc_regular.h"
 #include <stdio.h>
 
-static void delay (void);
+#include "../Inc/32f407_adc_regular.h"
+#include "../Inc/32f407_delay_timer.h"
 
-static void delay(void){
-	for(uint32_t i = 0; i < 500000/2; i ++);
-}
+
+
 
 int8_t AdcInit(){
 
+	DelayTimer_t AdcTimer;
+
 	// Configure ADC so we accept one in input on one ch
 	//enable ADC1 clock
-	RCC->APB2ENR |= (1 << RCC_APB2ENR_ADC1EN_Pos);
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
 	//choose 12 bit resolution
 	ADC1->CR1 &= ~(3 << ADC_CR1_RES_Pos);
 	// conversion mode, single default
@@ -32,7 +33,7 @@ int8_t AdcInit(){
 	ADC1->CR2 |= (1 << ADC_CR2_ADON_Pos);
 
 	// give ADC and Temp Sensor time to ramp up
-	delay();
+	Timer_Start(&AdcTimer, 2);
 }
 
 uint16_t AdcReadChannel(uint8_t  ChannelNo){
@@ -48,7 +49,7 @@ uint16_t AdcReadChannel(uint8_t  ChannelNo){
 	
 	float Vsense = (float)temperature_raw/4096 * 3.3;
 
-	printf("Raw value to Voltage from ADC COnversion %3.3f \n", Vsense);
+	printf("Raw value to Voltage from ADC Conversion %3.3f \n", Vsense);
 
 	float VDeg =((Vsense - 0.76)/0.25) + 25;
 

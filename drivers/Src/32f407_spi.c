@@ -1,7 +1,8 @@
-#include "../Inc/32f407_spi.h"
 #include <stdint.h>
 #include <stdio.h>
 
+#include "../Inc/32f407_spi.h"
+#include "../Inc/32f407_delay_timer.h"
 
 static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle);
 static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle);
@@ -97,9 +98,8 @@ void SPI_Init(SPI_Handle_t *pSPIHandle){
 	pSPIHandle->pSPIx->CR1 |= (ASSERT << SPI_CR1_SSI_Pos);
 
 
-	//silly delay 
-	for(uint32_t i = 0; i < 250000; i++ ){
-	}
+	DelayTimer_t spiTimer;
+	Timer_Start(&spiTimer, 2);
 
 	//Enable Interrupts
     if(pSPIHandle->pSPIx == SPI1){
