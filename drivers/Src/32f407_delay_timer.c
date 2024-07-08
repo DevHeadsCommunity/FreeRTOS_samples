@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 uint32_t numTimers = 0;
-DelayTimer_t timers[MAX_TIMERS];
+DelayTimer_t *timers[MAX_TIMERS];
 
 
 /**
@@ -37,9 +37,8 @@ void Timer_Start(DelayTimer_t *timer, uint32_t milliseconds) {
  * @param timerIndex 
  * @return uint8_t 
  */
-uint8_t Timer_IsElapsed(uint32_t timerIndex) {
-	uint32_t myCounterValue = timers[timerIndex].delayCounter;
-    return (myCounterValue == 0);
+uint8_t Timer_IsElapsed(DelayTimer_t *timer) {
+    return(timer->delayCounter == 0);
 }
 
 /**
@@ -60,8 +59,8 @@ void SysTick_Handler(void) {
  */
 void Timer_Update(void) { 
     for (uint32_t i = 0; i < numTimers; i++) {
-        if (timers[i].delayCounter > 0) {
-            timers[i].delayCounter--;
+        if (timers[i]->delayCounter > 0) {
+            timers[i]->delayCounter--;
         }
     }
 }

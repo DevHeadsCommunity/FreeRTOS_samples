@@ -29,27 +29,33 @@
 #define BLUE_LED_PIN 15
 
 Lis3_Config_t Accel_1;
-
-
 volatile uint8_t SHOULD_READ = 1;
 
-
-
 static void ConfigureTim7(void);
+void Sys_Init();
+
+
+
+void delay(void);
+
+void delay(){
+	for(uint32_t i = 0; i < 250000; i++){
+		;
+	}
+}
 
 
 
 
 int main(void)
 {	
-	//Setup Systick so we remove delays
-	Timer_Init();
-	ConfigureTim7();
 	
-
-
-
-
+	//ConfigureTim7();
+	//Setup Systick so we remove delays
+	Sys_Init();
+	Timer_Init();
+	
+	
 
 	//Blue LED CMSIS
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
@@ -61,10 +67,31 @@ int main(void)
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
 
+	//Make a timer for main 
+	DelayTimer_t mainTimer;
+	Timer_Start(&mainTimer, 20);
+	uint32_t myTimNum = numTimers++;
+	timers[myTimNum] = &mainTimer;
+
 	GPIOD->BSRR |= GPIO_BSRR_BS_15;
+	while(!Timer_IsElapsed(&mainTimer)) {
+		//we should yield to other tasks here ...	
+		__WFI(); // Let's sleep we can be interrupted but will wait
+	}
+	GPIOD->BSRR |= GPIO_BSRR_BR_15;
+
+			
 
 
 	
+	while(1) {
+		
+	}
+
+	return 0;
+}
+
+void Sys_Init(){
 	//enable FPU
 	SCB->CPACR |= ((3UL << 20U)|(3UL << 22U));
 
@@ -130,17 +157,14 @@ int main(void)
 	Lis3WriteRead(ctrl_4, &read_settings);
 	printf("ODR and Axes Config Data: %#X \n", read_settings);
 	/*End SPI Read Write*/
+
+
 	
-	//Make a timer for main 
-	DelayTimer_t mainTimer;
-	Timer_Start(&mainTimer, 20);
-	uint32_t myTimNum = numTimers++;
-	timers[myTimNum] = mainTimer;
 	
-	GPIOD->BSRR |= GPIO_BSRR_BR_15;
+	//GPIOD->BSRR |= GPIO_BSRR_BR_15;
 	
-	while(1) {
-		//float x_reading = Lis3ReadAxis('x');
+
+	/*float x_reading = Lis3ReadAxis('x');
 		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
 
 		if(SHOULD_READ == 1){
@@ -161,11 +185,9 @@ int main(void)
 
 			//AdcReadChannel(16);
 		}
-
-		
-	}
-	return 0;
+		*/
 }
+
 
 /*
  * Configure timer 3 so that we can use it for some delays
