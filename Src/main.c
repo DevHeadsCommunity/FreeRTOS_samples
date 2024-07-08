@@ -147,7 +147,7 @@ int main(void)
 			GPIOD->BSRR |= GPIO_BSRR_BS_15;
 			
 
-			while(!Timer_IsElapsed(&mainTimer, myTimNum)) {
+			while(!Timer_IsElapsed(myTimNum)) {
 				//we should yield to other tasks here ...	
 				__WFI(); // Let's sleep we can be interrupted but will wait
 			}

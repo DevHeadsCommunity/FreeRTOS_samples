@@ -23,7 +23,7 @@ extern DelayTimer_t timers[MAX_TIMERS];
 
 void Timer_Init(void);
 void Timer_Start(DelayTimer_t *timer, uint32_t milliseconds);
-uint8_t Timer_IsElapsed(DelayTimer_t *timer, uint32_t myTimNum);
+uint8_t Timer_IsElapsed(uint32_t timerIndex);
 void Timer_Update(void);
 
 #endif /* B8C01866_76FF_4A24_BFD0_8D0EC68CE6CE */

@@ -17,9 +17,9 @@ void Timer_Start(DelayTimer_t *timer, uint32_t milliseconds) {
 }
 
 // Check if the delay has elapsed
-uint8_t Timer_IsElapsed(DelayTimer_t *timer,  uint32_t numTimer) {
-	uint32_t timy = timers[numTimer].delayCounter;
-    return (timy == 0);
+uint8_t Timer_IsElapsed(uint32_t timerIndex) {
+	uint32_t myCounterValue = timers[timerIndex].delayCounter;
+    return (myCounterValue == 0);
 }
 
 // SysTick Handler to update all active timers
@@ -31,7 +31,6 @@ void SysTick_Handler(void) {
 void Timer_Update(void) { 
     for (uint32_t i = 0; i < numTimers; i++) {
         if (timers[i].delayCounter > 0) {
-            printf("Timer %lu: delayCounter = %lu\n", i, timers[i].delayCounter); // Debug output
             timers[i].delayCounter--;
         }
     }
