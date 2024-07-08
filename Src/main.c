@@ -22,11 +22,8 @@
 //for print f
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 
-#define BLUE_LED_PORT GPIOD
-#define BLUE_LED_PIN 15
 
 Lis3_Config_t Accel_1;
 volatile uint8_t SHOULD_READ = 1;
@@ -36,24 +33,17 @@ void Sys_Init();
 
 
 
-void delay(void);
-
-void delay(){
-	for(uint32_t i = 0; i < 250000; i++){
-		;
-	}
-}
-
 
 
 
 int main(void)
 {	
 	
-	//ConfigureTim7();
+	
 	//Setup Systick so we remove delays
 	Sys_Init();
 	Timer_Init();
+	ConfigureTim7();
 	
 	
 
@@ -73,18 +63,30 @@ int main(void)
 	uint32_t myTimNum = numTimers++;
 	timers[myTimNum] = &mainTimer;
 
-	GPIOD->BSRR |= GPIO_BSRR_BS_15;
-	while(!Timer_IsElapsed(&mainTimer)) {
-		//we should yield to other tasks here ...	
-		__WFI(); // Let's sleep we can be interrupted but will wait
-	}
-	GPIOD->BSRR |= GPIO_BSRR_BR_15;
-
-			
-
-
 	
 	while(1) {
+		float x_reading = Lis3ReadAxis('x');
+		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
+
+		if(SHOULD_READ == 1){
+			GPIOD->BSRR |= GPIO_BSRR_BS_15;
+			
+
+			while(!Timer_IsElapsed(&mainTimer)) {
+				//we should yield to other tasks here ...	
+				__WFI(); // Let's sleep we can be interrupted but will wait
+			}
+			
+			int8_t today_temp = Lis3ReadTemp();
+			printf("Temp is %dC Degrees Celsius \n", today_temp);
+			
+			GPIOD->BSRR |= GPIO_BSRR_BR_15;
+			SHOULD_READ = 0;
+
+
+			//AdcReadChannel(16);
+		}
+		
 		
 	}
 
@@ -157,35 +159,9 @@ void Sys_Init(){
 	Lis3WriteRead(ctrl_4, &read_settings);
 	printf("ODR and Axes Config Data: %#X \n", read_settings);
 	/*End SPI Read Write*/
-
-
-	
-	
-	//GPIOD->BSRR |= GPIO_BSRR_BR_15;
 	
 
-	/*float x_reading = Lis3ReadAxis('x');
-		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
-
-		if(SHOULD_READ == 1){
-			GPIOD->BSRR |= GPIO_BSRR_BS_15;
-			
-
-			while(!Timer_IsElapsed(myTimNum)) {
-				//we should yield to other tasks here ...	
-				__WFI(); // Let's sleep we can be interrupted but will wait
-			}
-			
-			int8_t today_temp = Lis3ReadTemp();
-			printf("Temp is %dC Degrees Celsius \n", today_temp);
-			
-			GPIOD->BSRR |= GPIO_BSRR_BR_15;
-			SHOULD_READ = 0;
-
-
-			//AdcReadChannel(16);
-		}
-		*/
+	
 }
 
 
