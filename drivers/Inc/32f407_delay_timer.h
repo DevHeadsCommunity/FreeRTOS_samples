@@ -8,15 +8,12 @@
 
 
 
-
-
 typedef struct {
     volatile uint32_t delayCounter;
 }DelayTimer_t;
 
 extern uint32_t numTimers;
 extern DelayTimer_t timers[MAX_TIMERS];
-
 
 
 
