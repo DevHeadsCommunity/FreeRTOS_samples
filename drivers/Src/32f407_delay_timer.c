@@ -57,10 +57,14 @@ void SysTick_Handler(void) {
  * values
  * 
  */
-void Timer_Update(void) { 
+void Timer_Update(void) {
+    // start a critical section of code
+    __disable_irq();
     for (uint32_t i = 0; i < numTimers; i++) {
         if (timers[i]->delayCounter > 0) {
             timers[i]->delayCounter--;
         }
     }
+    // complete the critical section of code 
+    __enable_irq();
 }
