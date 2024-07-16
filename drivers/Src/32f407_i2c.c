@@ -82,9 +82,9 @@ static void I2C_MasterHandleTXEInterrupt(I2C_Handle_t *pI2CHandle );
  *  */
 
 void I2C_Init(I2C_Handle_t *pI2CHandle){
+	I2C_PCLK_CTRL(pI2CHandle->pI2Cx, ASSERT);
+
 	uint32_t temp_reg = 0;
-
-
 	// ack control
 	temp_reg |= pI2CHandle->I2C_Config.I2C_ACKControl << I2C_CR1_ACK_Pos;
 
@@ -138,6 +138,26 @@ void I2C_Init(I2C_Handle_t *pI2CHandle){
 
 	pI2CHandle->pI2Cx->CCR = temp_reg;
 
+	// Handle TRISE config
+	if (pI2CHandle->I2C_Config.I2C_SCLSpeed <= I2C_SCL_SPEED_SM) {
+		//standard Mode
+		temp_reg = (RCC_GetPCLK1Value() / 1000000U) + 1;
+
+	} else {
+		//fast mode
+		temp_reg = ((RCC_GetPCLK1Value() * 300) / 1000000U) + 1;
+
+	}
+
+	pI2CHandle->pI2Cx->TRISE = temp_reg & 0x3F;
+
+	// Enable Peripheral for use now
+	I2C_PeripheralControl(pI2CHandle->pI2Cx, ASSERT);
+
+	// Enable Acking 
+	I2C_ManageAcking(pI2CHandle->pI2Cx, ASSERT);
+
+
 	//Enable Interrupts only non blocking for now
 	if(pI2CHandle->pI2Cx == I2C1){
 		NVIC_EnableIRQ(I2C1_EV_IRQn);
@@ -150,8 +170,7 @@ void I2C_Init(I2C_Handle_t *pI2CHandle){
 		NVIC_EnableIRQ(I2C3_ER_IRQn);
 	}
 
-	// Enable Peripheral for use now
-	I2C_PeripheralControl(pI2CHandle->pI2Cx, ASSERT);
+	
 
 }
 
@@ -302,7 +321,7 @@ void I2C_ManageAcking(I2C_TypeDef *pI2Cx, uint8_t EnorDi){
 		pI2Cx->CR1 &= ~(1 << I2C_CR1_ACK_Pos);
 
 		//wait for rxne
-		while(!I2C_GetFlagStatus(pI2Cx, I2C_FLAG_RXNE))
+		while(!(pI2Cx->SR1 & (1 << I2C_SR1_RXNE_Pos)))
 
 		// stop condition
         I2C_GenerateStopCondition(pI2Cx);
@@ -323,7 +342,7 @@ static void I2C_GenerateStartCondition(I2C_TypeDef *pI2Cx)
 
 
 static void I2C_ExecuteAddressPhaseWrite(I2C_TypeDef *pI2Cx, uint8_t SlaveAddr)
-{
+{	
 	SlaveAddr = SlaveAddr << 1;
 	SlaveAddr &= ~(1); //SlaveAddr is Slave address + r/nw bit=0
 	pI2Cx->DR = SlaveAddr;
@@ -334,6 +353,8 @@ static void I2C_ExecuteAddressPhaseRead(I2C_TypeDef *pI2Cx, uint8_t SlaveAddr)
 {
 	SlaveAddr = SlaveAddr << 1;
 	SlaveAddr |= 1; //SlaveAddr is Slave address + r/nw bit=1
+	printf("After Shift in RX %#X \n", SlaveAddr);
+
 	pI2Cx->DR = SlaveAddr;
 }
 
@@ -488,6 +509,7 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_SB_Pos);
 	if(EVENT && temp1)
 	{
+		printf("Handled start \n");
 		//read SR1 and write DR
 		if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX) {
 			I2C_ExecuteAddressPhaseWrite(pI2CHandle->pI2Cx, pI2CHandle->DevAddr);
@@ -504,6 +526,7 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_ADDR_Pos);
 	if(EVENT && temp1)
 	{
+		printf("yes ADDR work is done \n");
 		// Handle ADDR
 		I2C_ClearADDRFlag(pI2CHandle);
 	}
@@ -512,6 +535,8 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_BTF_Pos);
 	if(EVENT && temp1)
 	{
+		printf("Handled BTF \n");
+
 		// Handle TX mode
 		if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX) {
 			if(pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_TXE_Pos)){
@@ -546,6 +571,8 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_TXE_Pos);
 	if(EVENT && BUFFER && temp1)
 	{
+		printf("Handled start TXE \n");
+
 		// proceed if master
 		if(pI2CHandle->pI2Cx->SR2 & (1 << I2C_SR2_MSL_Pos)){
 			if(pI2CHandle->TxRxState ==  I2C_BUSY_IN_TX){
@@ -559,6 +586,8 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_RXNE_Pos);
 	if(EVENT && BUFFER && temp1)
 	{
+		printf("Handled start RXNE \n");
+
 		//check if master
 		if(pI2CHandle->pI2Cx->SR2 & (1 << I2C_SR2_MSL_Pos)){
 			if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX){
