@@ -20,6 +20,8 @@ target_include_directories(
     "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:C>>:${PROJECT_SOURCE_DIR}/drivers/Inc>"
     "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:C>>:${PROJECT_SOURCE_DIR}/CMSIS/Inc>"
     "$<$<AND:$<NOT:$<CONFIG:Debug>>,$<COMPILE_LANGUAGE:C>>:${PROJECT_SOURCE_DIR}/Inc>"
+    "freertos/source/include"
+    "freertos/source/portable/GCC/ARM_CM4F"
 )
 
 target_compile_options(
