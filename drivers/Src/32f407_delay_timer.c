@@ -44,10 +44,13 @@ uint8_t Timer_IsElapsed(DelayTimer_t *timer) {
 /**
  * @brief SysTick_Hanlder
  * ISR for systick interrupt.
- */
+ 
+ Now Handled in FreeRtos hook
 void SysTick_Handler(void) {
     Timer_Update();
 }
+*/
+
 
 /**
  * @brief Timer_Update

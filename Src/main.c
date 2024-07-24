@@ -18,6 +18,26 @@
 
 #include "../CMSIS/Inc/main.h"
 #include "../CMSIS/Inc/stm32f407xx.h"
+#include "../freertos/source/include/FreeRTOS.h"
+#include "../freertos/source/include/task.h"
+
+//RTOS Funcs 
+// This function is called every tick interrupt.
+void vApplicationTickHook(void)
+{
+    // Optional: Add your custom tick hook code here
+	Timer_Update();
+}
+
+// This function is called when a stack overflow is detected.
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+    // Optional: Add your custom stack overflow handling code here
+    // For example, you can reset the system or enter an infinite loop
+    (void)xTask;
+    (void)pcTaskName;
+    for (;;);
+}
 
 //for print f
 #include <stdint.h>
@@ -31,6 +51,12 @@ volatile uint8_t SHOULD_READ = 1;
 static void ConfigureTim7(void);
 void Sys_Init();
 
+I2C_Handle_t I2C1Handle;
+#define device_id 0xAA;
+
+
+
+
 
 
 
@@ -42,8 +68,65 @@ int main(void)
 	
 	//Setup Systick so we remove delays
 	Sys_Init();
-	Timer_Init();
-	ConfigureTim7();
+	//Timer_Init();
+	//ConfigureTim7();
+
+	/*I2c*/
+	uint32_t rcc_speed =   RCC_GetPCLK1Value();
+
+	printf("System booted with Default clock of: %d MHz \n", rcc_speed);
+
+
+
+
+	//Setup I2c
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
+	uint32_t altfn_reg;
+
+	//get this pins altfn reg
+	altfn_reg = 6%8;
+	GPIOB->AFR[0] |= 4 << (altfn_reg * 4);
+	//Set up pins
+	GPIOB->MODER |= GPIO_MODER_MODER6_1;
+	GPIOB->OTYPER |= GPIO_OTYPER_OT6;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_1;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_0;
+	
+	
+	//get this pins altfn reg
+	altfn_reg = 7%8;
+	GPIOB->AFR[0] |= 4 << (altfn_reg * 4);
+
+	GPIOB->MODER |= GPIO_MODER_MODER7_1;
+	GPIOB->OTYPER |= GPIO_OTYPER_OT7;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7_1;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR7_0;
+	
+
+	printf("GPIO setup on port b pin 6 scl pin 7 sda \n");
+
+	//Init i2c1
+	I2C1Handle.pI2Cx = I2C1;
+	I2C1Handle.I2C_Config.I2C_ACKControl = ASSERT;
+	I2C1Handle.I2C_Config.I2C_DeviceAddress = device_id;
+	I2C1Handle.I2C_Config.I2C_FMDutyCycle = I2C_FM_DUTY_2;
+	I2C1Handle.I2C_Config.I2C_SCLSpeed = I2C_SCL_SPEED_SM;
+	I2C_Init(&I2C1Handle);
+
+	uint8_t code = 0x00;
+	uint8_t addr = 0x68;
+	uint8_t rx_buf[3];
+
+	uint8_t rxes[2] = {0x00, 0x7F};
+	// Send some data
+	I2C_MasterSendData(&I2C1Handle, rxes, 2, addr, REFUTE);
+
+	//for(uint32_t i = 0; i < 200000; i++){}
+	
+	//I2C_MasterReceiveData(&I2C1Handle, rx_buf, 3, addr, REFUTE);
+	
+
+	/*end i2c*/
 	
 	
 
@@ -93,41 +176,13 @@ int main(void)
 	return 0;
 }
 
+
+
 void Sys_Init(){
 	//enable FPU
 	SCB->CPACR |= ((3UL << 20U)|(3UL << 22U));
 
-	/*I2c*/
-	uint32_t rcc_speed =   RCC_GetPCLK1Value();
-
-	printf("System booted with Default clock of: %d MHz \n", rcc_speed);
-
-
-	//Set up pins
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
-
-	uint32_t altfn_reg;
-
-	//Setup I2c
-	GPIOB->MODER |= GPIO_MODER_MODER6_1;
-	GPIOB->OTYPER |= (1 << GPIO_OTYPER_OT6_Pos);
-	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_1;
-	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR6_0;
-	//get this pins altfn reg
-	altfn_reg = 6;
-	GPIOA->AFR[0] |= 4 << (altfn_reg * 4);
-
-	GPIOB->MODER |= GPIO_MODER_MODER7_1;
-	GPIOB->OTYPER |= (1 << GPIO_OTYPER_OT7_Pos);
-	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7_1;
-	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR7_0;
-	//get this pins altfn reg
-	altfn_reg = 7;
-	GPIOA->AFR[0] |= 4 << (altfn_reg * 4);
-
-	printf("GPIO setup on port b pin 6 scl pin 7 sda \n");
-
-	/*end i2c*/
+	
 
 
 	/*LIS3 Setup*/
@@ -190,6 +245,7 @@ static void ConfigureTim7(void){
 
 	/* Enable NVIC Interrupt for Timer 6 */
 	NVIC_EnableIRQ(TIM7_IRQn);
+	
 
 	/* Finally enable TIM3 module */
 	TIM7->CR1 = (1 << 0);
@@ -204,5 +260,38 @@ void TIM7_IRQHandler(void) {
 	SHOULD_READ = 1;
 }
 
+void I2C1_EV_IRQHandler (void)
+{
+	I2C_EV_IRQHandling(&I2C1Handle);
+}
 
+
+void I2C1_ER_IRQHandler (void)
+{
+	I2C_ER_IRQHandling(&I2C1Handle);
+}
+
+void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle,uint8_t AppEv)
+{
+     if(AppEv == I2C_EV_TX_CMPLT)
+     {
+    	 printf("i2c Tx is completed\n");
+     }else if (AppEv == I2C_EV_RX_CMPLT)
+     {
+    	 printf("Rx is completed\n");
+    	 //rxComplt = SET;
+     }else if (AppEv == I2C_ERROR_AF)
+     {
+    	 printf("Error : Ack failure\n");
+    	 //in master ack failure happens when slave fails to send ack for the byte
+    	 //sent from the master.
+    	 I2C_CloseSendData(pI2CHandle);
+
+    	 //generate the stop condition to release the bus
+    	 I2C_GenerateStopCondition(I2C1);
+
+    	 //Hang in infinite loop
+    	 //while(1);
+     }
+}
 
