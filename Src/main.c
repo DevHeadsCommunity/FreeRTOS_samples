@@ -16,6 +16,10 @@
  ******************************************************************************
  */
 
+ //for print f
+#include <stdint.h>
+#include <stdio.h>
+
 #include "../CMSIS/Inc/main.h"
 #include "../CMSIS/Inc/stm32f407xx.h"
 #include "../freertos/source/include/FreeRTOS.h"
@@ -27,6 +31,7 @@ void vApplicationTickHook(void)
 {
     // Optional: Add your custom tick hook code here
 	Timer_Update();
+	printf("I am invoked \n");
 }
 
 // This function is called when a stack overflow is detected.
@@ -34,14 +39,26 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
     // Optional: Add your custom stack overflow handling code here
     // For example, you can reset the system or enter an infinite loop
+	printf("Stack overflow! \n");
     (void)xTask;
     (void)pcTaskName;
     for (;;);
 }
 
-//for print f
-#include <stdint.h>
-#include <stdio.h>
+void vApplicationMallocFailedHook(void) {
+    // Handle malloc failure, e.g., log an error or reset the system
+    // For now, an empty implementation will suffice
+	printf("Malloc Failed \n");
+    while (1);
+}
+
+void vApplicationIdleHook(void) {
+    // Perform low-priority tasks or go to low-power mode
+    // For now, an empty implementation will suffice
+	printf("We are indle \n");
+}
+
+
 
 
 
@@ -127,6 +144,9 @@ int main(void)
 	
 
 	/*end i2c*/
+
+	//start freertos
+	vTaskStartScheduler();
 	
 	
 
