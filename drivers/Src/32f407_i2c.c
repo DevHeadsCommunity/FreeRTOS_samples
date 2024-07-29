@@ -294,9 +294,6 @@ uint8_t I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint
 		pI2CHandle->DevAddr = SlaveAddr;
 		pI2CHandle->Sr = Sr;
 
-		//Implement code to Generate START Condition
-		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
-
 		//Implement the code to enable ITBUFEN Control Bit
 		pI2CHandle->pI2Cx->CR2 |= ( 1 << I2C_CR2_ITBUFEN_Pos);
 
@@ -305,6 +302,9 @@ uint8_t I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint
 
 		//Implement the code to enable ITERREN Control Bit
 		pI2CHandle->pI2Cx->CR2 |= ( 1 << I2C_CR2_ITERREN_Pos);
+
+		//Generate Start condition after enabling interrupts
+		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
 	}
 
 	return busystate;
@@ -533,9 +533,10 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle){
 
 	//Handle BTF 
 	temp1 = pI2CHandle->pI2Cx->SR1 & (1 << I2C_SR1_BTF_Pos);
+	
 	if(EVENT && temp1)
 	{
-		printf("Handled BTF \n");
+		//printf("Handled BTF \n");
 
 		// Handle TX mode
 		if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX) {

@@ -25,34 +25,34 @@
       "preLaunchTask": "Build",
       "svdPath": "${command:vscode-embedded.st.svd}/STM32F407.svd"
     },
-    {
-      "name": "Cortex Debug",
-      "type": "cortex-debug",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "executable": "${command:cmake.launchTargetPath}",
-      "servertype": "openocd",
-      "device": "STM32F407VG",
-      "configFiles": [
-        "interface/stlink.cfg",
-        "target/stm32f4x.cfg"
-      ],
-      "svdFile": "${command:vscode-embedded.st.svd}/STM32F407.svd",
-      "preLaunchTask": "Build",
-      "runToEntryPoint": "main",
-      "swoConfig": {
-        "enabled": true,
-        "cpuFrequency": 16000000,
-        "swoFrequency": 2000000,
-        "source": "probe",
-        "decoders": [
-          {
-            "type": "console",
-            "port": 0,
-            "label": "ITM0"
-          }
-        ]
-      }
-    }
+    // {
+    //   "name": "Cortex Debug",
+    //   "type": "cortex-debug",
+    //   "request": "launch",
+    //   "cwd": "${workspaceFolder}",
+    //   "executable": "${command:cmake.launchTargetPath}",
+    //   "servertype": "openocd",
+    //   "device": "STM32F407VG",
+    //   "configFiles": [
+    //     "interface/stlink.cfg",
+    //     "target/stm32f4x.cfg"
+    //   ],
+    //   "svdFile": "${command:vscode-embedded.st.svd}/STM32F407.svd",
+    //   "preLaunchTask": "Build",
+    //   "runToEntryPoint": "main",
+    //   "swoConfig": {
+    //     "enabled": true,
+    //     "cpuFrequency": 16000000,
+    //     "swoFrequency": 2000000,
+    //     "source": "probe",
+    //     "decoders": [
+    //       {
+    //         "type": "console",
+    //         "port": 0,
+    //         "label": "ITM0"
+    //       }
+    //     ]
+    //   }
+    // }
   ]
 }

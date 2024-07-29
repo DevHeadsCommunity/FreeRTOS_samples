@@ -106,7 +106,8 @@ int main(void)
 	//Set up pins
 	GPIOB->MODER |= GPIO_MODER_MODER6_1;
 	GPIOB->OTYPER |= GPIO_OTYPER_OT6;
-	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_1;
+	// Very fast speed for i2c
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_0;
 	
 	
@@ -116,7 +117,7 @@ int main(void)
 
 	GPIOB->MODER |= GPIO_MODER_MODER7_1;
 	GPIOB->OTYPER |= GPIO_OTYPER_OT7;
-	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7_1;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR7_0;
 	
 
@@ -146,7 +147,9 @@ int main(void)
 	/*end i2c*/
 
 	//start freertos
-	vTaskStartScheduler();
+	//vTaskStartScheduler();
+
+	
 	
 	
 
