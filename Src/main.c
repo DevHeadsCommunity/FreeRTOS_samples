@@ -31,7 +31,7 @@ void vApplicationTickHook(void)
 {
     // Optional: Add your custom tick hook code here
 	Timer_Update();
-	printf("I am invoked \n");
+	printf("Application Tick Hook has been Run \n");
 }
 
 // This function is called when a stack overflow is detected.
@@ -55,7 +55,7 @@ void vApplicationMallocFailedHook(void) {
 void vApplicationIdleHook(void) {
     // Perform low-priority tasks or go to low-power mode
     // For now, an empty implementation will suffice
-	printf("We are indle \n");
+	printf("We are in Idle Hook \n");
 }
 
 
@@ -139,7 +139,7 @@ int main(void)
 	// Send some data
 	I2C_MasterSendData(&I2C1Handle, rxes, 2, addr, REFUTE);
 
-	//for(uint32_t i = 0; i < 200000; i++){}
+	for(uint32_t i = 0; i < 200000; i++){}
 	
 	//I2C_MasterReceiveData(&I2C1Handle, rx_buf, 3, addr, REFUTE);
 	
@@ -147,7 +147,7 @@ int main(void)
 	/*end i2c*/
 
 	//start freertos
-	//vTaskStartScheduler();
+	vTaskStartScheduler();
 
 	
 	

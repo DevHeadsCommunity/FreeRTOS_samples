@@ -64,7 +64,11 @@
 #define configUSE_MALLOC_FAILED_HOOK	1
 #define configUSE_APPLICATION_TASK_TAG	0
 #define configUSE_COUNTING_SEMAPHORES	1
-#define configGENERATE_RUN_TIME_STATS	0
+#define configGENERATE_RUN_TIME_STATS	1
+
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() 
+#define portGET_RUN_TIME_COUNTER_VALUE() xTaskGetTickCount
+
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
