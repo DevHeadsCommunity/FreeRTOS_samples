@@ -32,13 +32,14 @@ I2C_Handle_t I2C1Handle;
 #define device_id 0xAA;
 
 void prvSetupHardware(void);
+void vHeartBeat(void * pvParams);
 
 
 
 /*
 Functions in our application
 0.1. Setup the hardware as we want
-0.2. Heartbeat task?
+0.2. Heartbeat task
 1. Accelerometer - Log out axis values when a threshold is crossed
 2. We want a time update every minute
 3. We want a temprature measurement every 2 minutes
@@ -48,6 +49,8 @@ int main(void)
 {	
 	// Setup our Hardware
 	prvSetupHardware();
+
+	
 
 
 
@@ -67,6 +70,14 @@ int main(void)
 	
 
 	/*end i2c*/
+
+	/* Create tasks */
+	xTaskCreate(vHeartBeat,
+				"Heart Beat",
+				50,
+				NULL, 
+				1, 
+				NULL);	 
 
 	/*
 	start freertos
@@ -88,7 +99,6 @@ int main(void)
 		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
 
 		if(SHOULD_READ == 1){
-			GPIOD->BSRR |= GPIO_BSRR_BS_15;
 			
 
 		
@@ -96,7 +106,6 @@ int main(void)
 			int8_t today_temp = Lis3ReadTemp();
 			printf("Temp is %dC Degrees Celsius \n", today_temp);
 			
-			GPIOD->BSRR |= GPIO_BSRR_BR_15;
 			SHOULD_READ = 0;
 
 
@@ -207,6 +216,21 @@ void prvSetupHardware(void){
 	GPIOD->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR15_1;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
+}
+
+void vHeartBeat(void * pvParams) {
+	for (;;)
+	{
+		GPIOD->BSRR |= GPIO_BSRR_BS_15;
+		for(uint32_t x = 0; x < 25000; x++){}
+		GPIOD->BSRR |= GPIO_BSRR_BR_15;
+
+		uint32_t ticks = pdMS_TO_TICKS(1000);
+
+		vTaskDelay(ticks);
+	}
+
+	vTaskDelete(NULL);
 }
 
 

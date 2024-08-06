@@ -65,6 +65,7 @@
 #define configUSE_APPLICATION_TASK_TAG	0
 #define configUSE_COUNTING_SEMAPHORES	1
 #define configGENERATE_RUN_TIME_STATS	1
+#define configRECORD_STACK_HIGH_ADDRESS			1
 
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() 
 #define portGET_RUN_TIME_COUNTER_VALUE() xTaskGetTickCount
