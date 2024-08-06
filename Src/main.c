@@ -25,12 +25,196 @@
 #include "../freertos/source/include/FreeRTOS.h"
 #include "../freertos/source/include/task.h"
 
-//RTOS Funcs 
+
+Lis3_Config_t Accel_1;
+volatile uint8_t SHOULD_READ = 1;
+I2C_Handle_t I2C1Handle;
+#define device_id 0xAA;
+
+void prvSetupHardware(void);
+
+
+
+/*
+Functions in our application
+0.1. Setup the hardware as we want
+0.2. Heartbeat task?
+1. Accelerometer - Log out axis values when a threshold is crossed
+2. We want a time update every minute
+3. We want a temprature measurement every 2 minutes
+*/
+
+int main(void)
+{	
+	// Setup our Hardware
+	prvSetupHardware();
+
+
+
+	 // Should be in rtc task 
+
+	uint8_t code = 0x00;
+	uint8_t addr = 0x68;
+	uint8_t rx_buf[3];
+
+	uint8_t rxes[2] = {0x00, 0x7F};
+	// Send some data
+	I2C_MasterSendData(&I2C1Handle, rxes, 2, addr, REFUTE);
+
+	for(uint32_t i = 0; i < 200000; i++){}
+	
+	I2C_MasterReceiveData(&I2C1Handle, rx_buf, 3, addr, REFUTE);
+	
+
+	/*end i2c*/
+
+	/*
+	start freertos
+	Once this is started we have handed over control to freertos
+	*/
+	
+	vTaskStartScheduler();
+
+	// the following code is unreachable.
+	// Should be moved into specific tasks.
+
+	
+	
+	while(1) {
+
+		// Should be in Accel task
+		// delay before reading this.
+		float x_reading = Lis3ReadAxis('x');
+		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
+
+		if(SHOULD_READ == 1){
+			GPIOD->BSRR |= GPIO_BSRR_BS_15;
+			
+
+		
+			
+			int8_t today_temp = Lis3ReadTemp();
+			printf("Temp is %dC Degrees Celsius \n", today_temp);
+			
+			GPIOD->BSRR |= GPIO_BSRR_BR_15;
+			SHOULD_READ = 0;
+
+
+			//AdcReadChannel(16);
+		}
+		
+		
+	}
+
+	return 0;
+}
+
+/**
+ * @brief prvSetupHardware
+ *  Does all the hardware set up for the application 
+ *	Including, clock speed setup,  driver initializations, mode inits
+ */
+void prvSetupHardware(void){
+
+	//enable FPU
+	SCB->CPACR |= ((3UL << 20U)|(3UL << 22U));
+
+	// log out sys speed
+	uint32_t rcc_speed =   RCC_GetPCLK1Value();
+
+	printf("System booted with Default clock of: %d MHz \n", rcc_speed);
+
+	
+
+
+	/*LIS3 Setup*/
+    //choose datarate, filter, axes
+	Accel_1.Lis3_DR = 0x60;
+	Accel_1.Lis3_BDU = 0x0;
+	Accel_1.Lis3_Axes = 0x7;
+	Accel_1.Lis3_Sensitivity = SENSITIVITY_2G;
+	/* END LIS3 Setup*/
+
+	/*ADC SETup*/
+
+	AdcInit();
+
+	/* End ADC SETUP */
+
+	
+
+	/*Use SPI to set up Accelerometer*/
+	uint8_t read_address = 0x0F;
+	uint8_t read_data = 0xAA;
+	uint8_t read_settings = 0xFF;
+	uint8_t ctrl_4 = 0x20;
+	
+	Lis3_Init(Accel_1);
+	
+	Lis3WriteRead(read_address, &read_data);
+	printf("ID Data: %#X \n", read_data);
+	Lis3WriteRead(ctrl_4, &read_settings);
+	printf("ODR and Axes Config Data: %#X \n", read_settings);
+	/*End Accelerometer set up*/
+	
+
+	//Setup 12c for RTC
+	/*I2c*/
+	
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
+	uint32_t altfn_reg;
+
+	//get this pins altfn reg
+	altfn_reg = 6%8;
+	GPIOB->AFR[0] |= 4 << (altfn_reg * 4);
+	//Set up pins
+	GPIOB->MODER |= GPIO_MODER_MODER6_1;
+	GPIOB->OTYPER |= GPIO_OTYPER_OT6;
+	// Very fast speed for i2c
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_0;
+	
+	
+	//get this pins altfn reg
+	altfn_reg = 7%8;
+	GPIOB->AFR[0] |= 4 << (altfn_reg * 4);
+
+	GPIOB->MODER |= GPIO_MODER_MODER7_1;
+	GPIOB->OTYPER |= GPIO_OTYPER_OT7;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR7_0;
+	
+
+	
+
+	//Init i2c1
+	I2C1Handle.pI2Cx = I2C1;
+	I2C1Handle.I2C_Config.I2C_ACKControl = ASSERT;
+	I2C1Handle.I2C_Config.I2C_DeviceAddress = device_id;
+	I2C1Handle.I2C_Config.I2C_FMDutyCycle = I2C_FM_DUTY_2;
+	I2C1Handle.I2C_Config.I2C_SCLSpeed = I2C_SCL_SPEED_SM;
+	I2C_Init(&I2C1Handle);
+	printf("GPIO setup on port b pin 6 scl pin 7 sda \n");
+
+	/* End i2c init for RTC*/
+
+	//Set up Blue LED for heart beat
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+	GPIOD->MODER |= GPIO_MODER_MODER15_0;
+	GPIOD->MODER &= ~GPIO_MODER_MODER15_1;
+	GPIOD->OTYPER &= ~GPIO_OTYPER_OT_15;
+	GPIOD->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR15_0;
+	GPIOD->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR15_1;
+	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
+	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
+}
+
+
+//RTOS Hooks 
 // This function is called every tick interrupt.
 void vApplicationTickHook(void)
 {
     // Optional: Add your custom tick hook code here
-	Timer_Update();
 	printf("Application Tick Hook has been Run \n");
 }
 
@@ -58,230 +242,6 @@ void vApplicationIdleHook(void) {
 	printf("We are in Idle Hook \n");
 }
 
-
-
-
-
-Lis3_Config_t Accel_1;
-volatile uint8_t SHOULD_READ = 1;
-
-static void ConfigureTim7(void);
-void Sys_Init();
-
-I2C_Handle_t I2C1Handle;
-#define device_id 0xAA;
-
-
-
-
-
-
-
-
-
-int main(void)
-{	
-	
-	
-	//Setup Systick so we remove delays
-	Sys_Init();
-	//Timer_Init();
-	//ConfigureTim7();
-
-	/*I2c*/
-	uint32_t rcc_speed =   RCC_GetPCLK1Value();
-
-	printf("System booted with Default clock of: %d MHz \n", rcc_speed);
-
-
-
-
-	//Setup I2c
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; 
-	uint32_t altfn_reg;
-
-	//get this pins altfn reg
-	altfn_reg = 6%8;
-	GPIOB->AFR[0] |= 4 << (altfn_reg * 4);
-	//Set up pins
-	GPIOB->MODER |= GPIO_MODER_MODER6_1;
-	GPIOB->OTYPER |= GPIO_OTYPER_OT6;
-	// Very fast speed for i2c
-	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6;
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_0;
-	
-	
-	//get this pins altfn reg
-	altfn_reg = 7%8;
-	GPIOB->AFR[0] |= 4 << (altfn_reg * 4);
-
-	GPIOB->MODER |= GPIO_MODER_MODER7_1;
-	GPIOB->OTYPER |= GPIO_OTYPER_OT7;
-	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7;
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPDR7_0;
-	
-
-	printf("GPIO setup on port b pin 6 scl pin 7 sda \n");
-
-	//Init i2c1
-	I2C1Handle.pI2Cx = I2C1;
-	I2C1Handle.I2C_Config.I2C_ACKControl = ASSERT;
-	I2C1Handle.I2C_Config.I2C_DeviceAddress = device_id;
-	I2C1Handle.I2C_Config.I2C_FMDutyCycle = I2C_FM_DUTY_2;
-	I2C1Handle.I2C_Config.I2C_SCLSpeed = I2C_SCL_SPEED_SM;
-	I2C_Init(&I2C1Handle);
-
-	uint8_t code = 0x00;
-	uint8_t addr = 0x68;
-	uint8_t rx_buf[3];
-
-	uint8_t rxes[2] = {0x00, 0x7F};
-	// Send some data
-	I2C_MasterSendData(&I2C1Handle, rxes, 2, addr, REFUTE);
-
-	for(uint32_t i = 0; i < 200000; i++){}
-	
-	//I2C_MasterReceiveData(&I2C1Handle, rx_buf, 3, addr, REFUTE);
-	
-
-	/*end i2c*/
-
-	//start freertos
-	vTaskStartScheduler();
-
-	
-	
-	
-
-	//Blue LED CMSIS
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-	GPIOD->MODER |= GPIO_MODER_MODER15_0;
-	GPIOD->MODER &= ~GPIO_MODER_MODER15_1;
-	GPIOD->OTYPER &= ~GPIO_OTYPER_OT_15;
-	GPIOD->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR15_0;
-	GPIOD->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR15_1;
-	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
-	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
-
-	//Make a timer for main 
-	DelayTimer_t mainTimer;
-	Timer_Start(&mainTimer, 20);
-	uint32_t myTimNum = numTimers++;
-	timers[myTimNum] = &mainTimer;
-
-	
-	while(1) {
-		float x_reading = Lis3ReadAxis('x');
-		//printf("Combined X axis movement in mg: %.1f and  \n", x_reading);
-
-		if(SHOULD_READ == 1){
-			GPIOD->BSRR |= GPIO_BSRR_BS_15;
-			
-
-			while(!Timer_IsElapsed(&mainTimer)) {
-				//we should yield to other tasks here ...	
-				__WFI(); // Let's sleep we can be interrupted but will wait
-			}
-			
-			int8_t today_temp = Lis3ReadTemp();
-			printf("Temp is %dC Degrees Celsius \n", today_temp);
-			
-			GPIOD->BSRR |= GPIO_BSRR_BR_15;
-			SHOULD_READ = 0;
-
-
-			//AdcReadChannel(16);
-		}
-		
-		
-	}
-
-	return 0;
-}
-
-
-
-void Sys_Init(){
-	//enable FPU
-	SCB->CPACR |= ((3UL << 20U)|(3UL << 22U));
-
-	
-
-
-	/*LIS3 Setup*/
-    //choose datarate, filter, axes
-	Accel_1.Lis3_DR = 0x60;
-	Accel_1.Lis3_BDU = 0x0;
-	Accel_1.Lis3_Axes = 0x7;
-	Accel_1.Lis3_Sensitivity = SENSITIVITY_2G;
-	/* END LIS3 Setup*/
-
-	/*ADC SETup*/
-
-	AdcInit();
-
-	/* End ADC SETUP */
-
-	
-
-	/*SPI Read Write*/
-	uint8_t read_address = 0x0F;
-	uint8_t read_data = 0xAA;
-	uint8_t read_settings = 0xFF;
-	uint8_t ctrl_4 = 0x20;
-	
-	Lis3_Init(Accel_1);
-	
-	Lis3WriteRead(read_address, &read_data);
-	printf("ID Data: %#X \n", read_data);
-	Lis3WriteRead(ctrl_4, &read_settings);
-	printf("ODR and Axes Config Data: %#X \n", read_settings);
-	/*End SPI Read Write*/
-	
-
-	
-}
-
-
-/*
- * Configure timer 3 so that we can use it for some delays
- */
-static void ConfigureTim7(void){
-	//enable clock for timer 7
-	RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
-
-	// set a prescaler so we get 1KHz
-	//Required freq = CLK / (PSC + 1)
-	TIM7->PSC = 9999;
-
-	/* So, this will generate the 1ms delay */
-	TIM7->ARR = 47999;
-
-	//Enable timer to generate update events
-	TIM7->EGR |= TIM_EGR_UG;
-
-	/* Enable the Interrupt */
-	TIM7->DIER |= TIM_DIER_UIE;
-
-	/* Clear the Interrupt Status */
-	TIM7->SR &= ~TIM_SR_UIF;
-
-	/* Enable NVIC Interrupt for Timer 6 */
-	NVIC_EnableIRQ(TIM7_IRQn);
-	
-
-	/* Finally enable TIM3 module */
-	TIM7->CR1 = (1 << 0);
-}
-
-void TIM7_IRQHandler(void) {
-	//check if UIF flag is set
-	if (TIM7->SR & TIM_SR_UIF) {
-		// Clear Interrupt Flag
-		TIM7->SR &= ~(TIM_SR_UIF);
-	}
-	SHOULD_READ = 1;
-}
 
 void I2C1_EV_IRQHandler (void)
 {
