@@ -36,14 +36,12 @@ void vHeartBeat(void * pvParams);
 
 
 
-/*
-Functions in our application
-0.1. Setup the hardware as we want
-0.2. Heartbeat task
-1. Accelerometer - Log out axis values when a threshold is crossed
-2. We want a time update every minute
-3. We want a temprature measurement every 2 minutes
-*/
+
+
+
+
+
+
 
 int main(void)
 {	
@@ -116,6 +114,60 @@ int main(void)
 	}
 
 	return 0;
+}
+
+
+void prvSetupPA6asPWM(void) {
+
+	//Enable IO A & set PA6 as output
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	//AF Mode
+	GPIOA->MODER |= GPIO_MODER_MODER6_1;
+	//MAX SPEED
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED6;
+	//AF2 Mode
+	GPIOD->AFR[0] = GPIO_AFRL_AFRL6_2;
+
+
+	//PWM on Timer3 - Channel 1 
+	RCC ->APB1ENR |= RCC_APB1ENR_TIM3EN;
+
+	TIM3->CR1 &= ~TIM_CR1_CEN;
+
+	//Enable ARPE
+	TIM3->CR1 |= TIM_CR1_ARPE;
+
+	//dont pre scale this clock so it runs at 16 MHZ like sys
+	TIM3->PSC = 0;
+
+	//set the arr for a 300khz period
+	TIM3->ARR = 53;
+
+	//use the ccr reg for duty of
+	TIM3->CCR1 = 2;
+
+	//set the timer to pwm mode 1 on channel 1
+	TIM3->CCMR1 |=  6U << TIM_CCMR1_OC1M_Pos;
+
+	//Enable channel 1 preload
+	TIM3->CCMR1 |= TIM_CCMR1_OC1PE;
+
+	//Enable compare mode
+	TIM3->CCER |= TIM_CCER_CC1E;
+
+	//load prescaler and enable update events
+	TIM3->EGR |= TIM_EGR_UG;
+	TIM3->CR1 |= TIM_CR1_CEN;
+
+	//wait for update evebt
+	while(!(TIM3->SR & TIM_SR_UIF));
+
+	// Clear Interrupt Flag
+	TIM3->SR &= ~(TIM_SR_UIF);
+	
+	//Reset the counter
+	TIM3->CNT = 0;
+
 }
 
 /**
@@ -216,6 +268,10 @@ void prvSetupHardware(void){
 	GPIOD->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR15_1;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_0;
 	GPIOD->PUPDR &= ~GPIO_PUPDR_PUPDR15_1;
+
+
+
+
 }
 
 void vHeartBeat(void * pvParams) {
