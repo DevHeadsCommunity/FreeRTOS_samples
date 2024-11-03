@@ -33,6 +33,7 @@ I2C_Handle_t I2C1Handle;
 
 void prvSetupHardware(void);
 void vHeartBeat(void * pvParams);
+void prvSetupPA6asPWM(void);
 
 
 
@@ -47,6 +48,11 @@ int main(void)
 {	
 	// Setup our Hardware
 	prvSetupHardware();
+
+	prvSetupPA6asPWM();
+
+
+	
 
 	
 
@@ -132,6 +138,7 @@ void prvSetupPA6asPWM(void) {
 	//PWM on Timer3 - Channel 1 
 	RCC ->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
+	//Disable timer for configuration
 	TIM3->CR1 &= ~TIM_CR1_CEN;
 
 	//Enable ARPE
@@ -164,7 +171,7 @@ void prvSetupPA6asPWM(void) {
 
 	// Clear Interrupt Flag
 	TIM3->SR &= ~(TIM_SR_UIF);
-	
+
 	//Reset the counter
 	TIM3->CNT = 0;
 
